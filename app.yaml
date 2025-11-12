@@ -1,0 +1,41 @@
+runtime: python312
+
+# App Engine deployment configuration for Aurassure backend
+instance_class: F2
+
+entrypoint: gunicorn -b :$PORT main:app
+
+handlers:
+  # API routes handled by Flask
+  - url: /api/.*
+    script: auto
+    secure: always
+
+  # Serve static files from the React build
+  - url: /static
+    static_dir: frontend/build/static
+    secure: always
+
+  # Serve other static assets (favicon, manifest, etc.)
+  - url: /(.*\.(json|ico|png|jpg|jpeg|gif|svg|webp))$
+    static_files: frontend/build/\1
+    upload: frontend/build/.*\.(json|ico|png|jpg|jpeg|gif|svg|webp)$
+    secure: always
+
+  # Serve React app index.html for all other routes (SPA routing)
+  - url: /.*
+    static_files: frontend/build/index.html
+    upload: frontend/build/index.html
+    secure: always
+
+env_variables:
+  # These should be set in Google Cloud Console for security
+  # AccessId: "your_access_id"
+  # AccessKey: "your_access_key"
+
+# Automatic scaling configuration
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.65
+

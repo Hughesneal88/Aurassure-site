@@ -1,0 +1,20 @@
+steps:
+  # Install frontend dependencies and build
+  - name: 'node:18'
+    dir: 'frontend'
+    args: ['npm', 'ci']
+    id: 'install-frontend-deps'
+
+  - name: 'node:18'
+    dir: 'frontend'
+    args: ['npm', 'run', 'build']
+    id: 'build-frontend'
+    waitFor: ['install-frontend-deps']
+
+  # Deploy to App Engine
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['app', 'deploy', '--quiet']
+    id: 'deploy-app-engine'
+    waitFor: ['build-frontend']
+
+timeout: '1600s'
