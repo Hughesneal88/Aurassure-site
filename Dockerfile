@@ -4,7 +4,9 @@ FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
+RUN npm cache clean --force
 RUN npm ci --omit=dev
+WORKDIR /app/frontend
 COPY frontend/ ./
 RUN npm run build
 
@@ -20,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy backend code
 COPY backend/ ./
 COPY aurasure.py ./
+COPY backend/app.py ./
 
 # Copy built frontend from previous stage
 COPY --from=frontend-builder /app/frontend/build ./frontend/build

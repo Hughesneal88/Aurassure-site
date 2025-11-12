@@ -50,8 +50,7 @@ README.md
 .env.example
 
 # Frontend source (only need built version)
-frontend/src/
-frontend/public/
+
 frontend/package.json
 frontend/package-lock.json
 

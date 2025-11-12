@@ -90,3 +90,6 @@ def get_data(sensors=all, start_time=None, end_time=None, save_to=None, save_nam
     
 
 # print(get_data(save_to='csv'))
+
+if __name__ == '__main__':
+    print(get_data(save_to='csv'))
