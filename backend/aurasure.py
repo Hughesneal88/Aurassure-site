@@ -17,9 +17,9 @@ try:
     # Try to get secrets from Secret Manager (will fall back to env vars if local)
     AccessId = get_secret("AccessId")
     AccessKey = get_secret("AccessKey")
-except Exception as e:
+except Exception:
     # Fallback to environment variables if Secret Manager is not available
-    print(f"Using environment variables for credentials: {e}")
+    # Note: Error details are not logged to avoid potential sensitive data exposure
     AccessId = os.getenv("AccessId")
     AccessKey = os.getenv("AccessKey")
 

@@ -45,12 +45,12 @@ def get_secret(secret_id, project_id=None):
             # Return the decoded payload
             return response.payload.data.decode('UTF-8')
         except Exception as e:
-            print(f"Error fetching secret {secret_id} from Secret Manager: {e}")
             # Fall back to environment variable if Secret Manager fails
+            # Note: Error details are not logged to avoid potential sensitive data exposure
             if env_value:
-                print(f"Falling back to environment variable for {secret_id}")
+                # Falling back to environment variable
                 return env_value
-            raise
+            raise ValueError(f"Failed to fetch secret from Secret Manager and no environment variable fallback available")
     else:
         # Local development - use environment variable
         if env_value:
