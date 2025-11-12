@@ -36,12 +36,22 @@ App Engine is a fully managed, serverless platform that automatically handles in
    cd ..
    ```
 
-4. **Set environment variables** in Google Cloud Console:
-   - Go to [App Engine Settings](https://console.cloud.google.com/appengine/settings)
-   - Navigate to "Environment variables"
-   - Add:
-     - `AccessId`: Your Aurassure Access ID
-     - `AccessKey`: Your Aurassure Access Key
+4. **Configure secrets in Google Secret Manager** (Recommended):
+   
+   The application now uses Google Secret Manager to securely store API credentials.
+   See [SECRET_MANAGER_SETUP.md](SECRET_MANAGER_SETUP.md) for detailed setup instructions.
+   
+   Quick setup:
+   ```bash
+   # Create secrets
+   echo -n "your_access_id" | gcloud secrets create AccessId --data-file=-
+   echo -n "your_access_key" | gcloud secrets create AccessKey --data-file=-
+   
+   # Grant access to App Engine service account
+   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+     --member="serviceAccount:YOUR_PROJECT_ID@appspot.gserviceaccount.com" \
+     --role="roles/secretmanager.secretAccessor"
+   ```
 
 5. **Deploy to App Engine**:
    ```bash
@@ -132,29 +142,35 @@ For automatic deployments on git push, use Cloud Build.
 
 ### Setting Environment Variables
 
-**App Engine**:
+**App Engine** (Legacy method - not recommended):
 ```yaml
-# In app.yaml
+# In app.yaml - DO NOT USE, use Secret Manager instead
 env_variables:
   AccessId: "your_access_id"
   AccessKey: "your_access_key"
 ```
 
-**Cloud Run**:
+**Secret Manager** (Recommended - Required for this application):
+
+The application is configured to use Google Secret Manager. See [SECRET_MANAGER_SETUP.md](SECRET_MANAGER_SETUP.md) for complete setup instructions.
+
 ```bash
-gcloud run deploy aurassure-app \
-  --set-env-vars AccessId=YOUR_ACCESS_ID,AccessKey=YOUR_ACCESS_KEY
+# Create secrets with exact names: AccessId and AccessKey
+echo -n "your_access_id" | gcloud secrets create AccessId --data-file=-
+echo -n "your_access_key" | gcloud secrets create AccessKey --data-file=-
+
+# Grant access to App Engine service account
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:YOUR_PROJECT_ID@appspot.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
 ```
 
-**Using Secret Manager** (Recommended for production):
+**Cloud Run**:
 ```bash
-# Create secrets
-echo -n "your_access_id" | gcloud secrets create aurassure-access-id --data-file=-
-echo -n "your_access_key" | gcloud secrets create aurassure-access-key --data-file=-
-
-# Deploy Cloud Run with secrets
+# Deploy Cloud Run with secrets from Secret Manager
 gcloud run deploy aurassure-app \
-  --set-secrets=AccessId=aurassure-access-id:latest,AccessKey=aurassure-access-key:latest
+  --image gcr.io/YOUR_PROJECT_ID/aurassure-app \
+  --update-secrets=AccessId=AccessId:latest,AccessKey=AccessKey:latest
 ```
 
 ## Cost Optimization

@@ -28,14 +28,13 @@ handlers:
     upload: frontend/build/index.html
     secure: always
 
+# Environment variables loaded from Google Secret Manager
+# Secrets must be created in Secret Manager before deployment
 env_variables:
-  # These should be set in Google Cloud Console for security
-  # AccessId: "your_access_id"
-  # AccessKey: "your_access_key"
+  GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT}
 
 # Automatic scaling configuration
 automatic_scaling:
   min_instances: 1
   max_instances: 10
   target_cpu_utilization: 0.65
-
