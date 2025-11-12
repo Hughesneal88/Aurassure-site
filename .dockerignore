@@ -1,0 +1,46 @@
+# .dockerignore - files to exclude from Docker builds
+.git
+.gitignore
+.gcloudignore
+.env
+.env.example
+README.md
+DEPLOYMENT.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Node development
+frontend/node_modules/
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local scripts
+start.sh
+start.ps1
+
+# Documentation
+*.md
+!DEPLOYMENT.md
+
+# Data files
+*.csv
+*.json
+!package.json
+!package-lock.json

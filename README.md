@@ -151,6 +151,42 @@ This creates an optimized production build in `frontend/build/`.
 - `AccessId` - Aurassure API Access ID (required)
 - `AccessKey` - Aurassure API Access Key (required)
 - `REACT_APP_API_URL` - Backend API URL (default: http://localhost:5000)
+- `PORT` - Server port (default: 5000 for local, 8080 for GCP)
+
+## Deployment to Google Cloud Platform
+
+This application is ready to deploy to Google Cloud Platform. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+### Quick Deploy to App Engine
+
+```bash
+# Build the frontend
+cd frontend && npm run build && cd ..
+
+# Deploy to App Engine
+gcloud app deploy
+```
+
+### Quick Deploy to Cloud Run
+
+```bash
+# Build and deploy with one command
+gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/aurassure-app
+gcloud run deploy aurassure-app --image gcr.io/YOUR_PROJECT_ID/aurassure-app
+```
+
+### Using the Deployment Script
+
+```bash
+./deploy.sh
+```
+
+The deployment script provides an interactive menu to:
+- Deploy to App Engine
+- Deploy to Cloud Run
+- Build frontend only
+
+For complete deployment instructions, environment variable setup, and troubleshooting, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Security Notes
 
