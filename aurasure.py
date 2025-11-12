@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-AccessId = os.getenv("AccessId"))
-AccessKey = os.getenv("AccessKey"))
+AccessId = os.getenv("AccessId")
+AccessKey = os.getenv("AccessKey")
 
 
 
