@@ -65,6 +65,26 @@ npm start
 
 The frontend will start on `http://localhost:3000`
 
+### 4. Quick Start with Startup Scripts
+
+For convenience, you can use the provided startup scripts to run both servers simultaneously:
+
+**On Linux/macOS (Bash):**
+```bash
+./start.sh
+```
+
+**On Windows (PowerShell):**
+```powershell
+.\start.ps1
+```
+
+These scripts will:
+- Check for the `.env` file
+- Start both the backend and frontend servers
+- Display the server URLs
+- Allow you to stop both servers with Ctrl+C
+
 ## Usage
 
 1. Open your browser and navigate to `http://localhost:3000`
@@ -101,6 +121,8 @@ Aurassure-site/
 │   │   └── index.js       # Entry point
 │   └── package.json       # Node dependencies
 ├── .env                   # Environment variables (create this)
+├── start.sh               # Startup script for Linux/macOS
+├── start.ps1              # Startup script for Windows
 └── README.md
 ```
 
