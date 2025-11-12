@@ -2,6 +2,15 @@
 
 A modern web application for downloading environmental sensor data from Aurassure, featuring a Flask backend and React frontend.
 
+## 🚀 Quick Start
+
+**Want to deploy right away?** Choose your platform:
+
+- **[GitHub Pages + Render (Free)](QUICKSTART_GITHUB_RENDER.md)** - Free hosting, simple setup
+- **[Google Cloud Platform](QUICKSTART_GCP.md)** - Enterprise-grade, scalable
+
+**Running locally?** See [Local Development](#local-development) below.
+
 ## Features
 
 - 🎨 Modern, aesthetically pleasing UI with gradient design
@@ -24,7 +33,9 @@ A modern web application for downloading environmental sensor data from Aurassur
 - npm or yarn
 - Aurassure API credentials (Access ID and Access Key)
 
-## Setup Instructions
+## Local Development
+
+Run the application on your local machine for development and testing.
 
 ### 1. Environment Variables
 
@@ -151,14 +162,35 @@ This creates an optimized production build in `frontend/build/`.
 - `AccessId` - Aurassure API Access ID (required)
 - `AccessKey` - Aurassure API Access Key (required)
 - `REACT_APP_API_URL` - Backend API URL (default: http://localhost:5000)
-- `PORT` - Server port (default: 5000 for local, 8080 for GCP)
+- `PORT` - Server port (default: 5000 for local, 8080 for GCP, 10000 for Render)
+- `CORS_ORIGINS` - Allowed CORS origins (default: *, set to specific URLs in production)
 
-## Deployment to Google Cloud Platform
+## Deployment Options
 
-This application is ready to deploy to Google Cloud Platform. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+This application supports multiple deployment platforms:
 
-### Quick Deploy to App Engine
+### Option 1: GitHub Pages + Render (Recommended for Free Hosting) 🆓
 
+Deploy the frontend to GitHub Pages and backend to Render for a free, scalable solution.
+
+**Quick Start:**
+1. Deploy backend to [Render](https://render.com)
+2. Set `REACT_APP_API_URL` repository variable in GitHub
+3. Push to `main` branch - GitHub Actions automatically deploys frontend
+
+**Benefits:**
+- ✅ Free hosting for both frontend and backend
+- ✅ Automatic deployments on push
+- ✅ HTTPS enabled by default
+- ✅ Perfect for public-facing applications
+
+📖 **Full Guide:** [DEPLOYMENT_GITHUB_RENDER.md](DEPLOYMENT_GITHUB_RENDER.md) | [Quick Start](QUICKSTART_GITHUB_RENDER.md)
+
+### Option 2: Google Cloud Platform ☁️
+
+Deploy to Google App Engine or Cloud Run for enterprise-grade infrastructure.
+
+**Quick Deploy:**
 ```bash
 # Build the frontend
 cd frontend && npm run build && cd ..
@@ -167,26 +199,21 @@ cd frontend && npm run build && cd ..
 gcloud app deploy
 ```
 
-### Quick Deploy to Cloud Run
+**Benefits:**
+- ✅ Enterprise-grade infrastructure
+- ✅ Advanced scaling and monitoring
+- ✅ Integration with other GCP services
+- ✅ 99.95% SLA on paid tier
 
-```bash
-# Build and deploy with one command
-gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/aurassure-app
-gcloud run deploy aurassure-app --image gcr.io/YOUR_PROJECT_ID/aurassure-app
-```
+📖 **Full Guide:** [DEPLOYMENT.md](DEPLOYMENT.md) | [Quick Start](QUICKSTART_GCP.md)
 
-### Using the Deployment Script
+### Comparison
 
-```bash
-./deploy.sh
-```
-
-The deployment script provides an interactive menu to:
-- Deploy to App Engine
-- Deploy to Cloud Run
-- Build frontend only
-
-For complete deployment instructions, environment variable setup, and troubleshooting, see [DEPLOYMENT.md](DEPLOYMENT.md).
+| Feature | GitHub Pages + Render | Google Cloud Platform |
+|---------|----------------------|----------------------|
+| **Free Tier** | ✅ Generous | ⚠️ Limited |
+| **Setup Complexity** | Easy | Moderate |
+| **Best For** | Personal/Small Projects | Enterprise/Large Scale |
 
 ## Security Notes
 
