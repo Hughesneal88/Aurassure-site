@@ -39,30 +39,28 @@ Write-Host "Press Ctrl+C to stop both servers" -ForegroundColor Yellow
 
 # Handle Ctrl+C to clean up processes
 $cleanup = {
+    param($backend, $frontend)
     Write-Host "`nStopping servers..." -ForegroundColor Yellow
-    if ($backendProcess -and !$backendProcess.HasExited) {
-        Stop-Process -Id $backendProcess.Id -Force -ErrorAction SilentlyContinue
+    if ($backend -and !$backend.HasExited) {
+        Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
     }
-    if ($frontendProcess -and !$frontendProcess.HasExited) {
-        Stop-Process -Id $frontendProcess.Id -Force -ErrorAction SilentlyContinue
+    if ($frontend -and !$frontend.HasExited) {
+        Stop-Process -Id $frontend.Id -Force -ErrorAction SilentlyContinue
     }
-    exit
 }
 
-# Register event handler for Ctrl+C
-[Console]::TreatControlCAsInput = $false
+# Wait for user to press Ctrl+C
 try {
-    Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanup | Out-Null
-    
     # Wait for processes to exit
     while ($true) {
         if ($backendProcess.HasExited -or $frontendProcess.HasExited) {
             Write-Host "One of the servers has stopped. Cleaning up..." -ForegroundColor Yellow
-            & $cleanup
+            & $cleanup $backendProcess $frontendProcess
+            exit 1
         }
         Start-Sleep -Seconds 1
     }
 }
 finally {
-    & $cleanup
+    & $cleanup $backendProcess $frontendProcess
 }
