@@ -37,6 +37,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
 
+      # Deploy to App Engine
+      # Note: The service account must have the following IAM roles:
+      # - App Engine Admin (roles/appengine.appAdmin)
+      # - Secret Manager Secret Accessor (roles/secretmanager.secretAccessor)
+      # - Service Account User (roles/iam.serviceAccountUser)
       - name: Deploy to App Engine
         run: gcloud app deploy --quiet --project=${{ secrets.GCP_PROJECT_ID }}
 

@@ -7,11 +7,21 @@ import pandas as pd
 
 import os
 from dotenv import load_dotenv
+
+# Load .env file for local development
 load_dotenv()
 
-
-AccessId = os.getenv("AccessId")
-AccessKey = os.getenv("AccessKey")
+# Import secrets utility for Google Secret Manager integration
+try:
+    from secrets_util import get_secret
+    # Try to get secrets from Secret Manager (will fall back to env vars if local)
+    AccessId = get_secret("AccessId")
+    AccessKey = get_secret("AccessKey")
+except Exception as e:
+    # Fallback to environment variables if Secret Manager is not available
+    print(f"Using environment variables for credentials: {e}")
+    AccessId = os.getenv("AccessId")
+    AccessKey = os.getenv("AccessKey")
 
 
 
