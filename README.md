@@ -2,6 +2,13 @@
 
 A modern web application for downloading environmental sensor data from Aurassure, featuring a Flask backend and React frontend.
 
+## 🔐 Important: Google Secret Manager Integration
+
+This application uses **Google Secret Manager** for secure credential storage in production. 
+
+- **For Local Development**: Use `.env` files (see setup below)
+- **For Cloud Deployment**: See [QUICK_START_SECRETS.md](QUICK_START_SECRETS.md) for Secret Manager setup
+
 ## Features
 
 - 🎨 Modern, aesthetically pleasing UI with gradient design
@@ -10,12 +17,14 @@ A modern web application for downloading environmental sensor data from Aurassur
 - 🔧 Sensor selection (individual or all sensors)
 - 💾 Multiple download formats (CSV, JSON)
 - 🚀 Fast and responsive
+- 🔐 Secure credential management with Google Secret Manager
 
 ## Architecture
 
 - **Backend**: Flask (Python) - REST API for data retrieval
 - **Frontend**: React - Modern, responsive user interface
 - **Data Source**: Aurassure IoT Platform API
+- **Credentials**: Google Secret Manager (production) / .env files (local)
 
 ## Prerequisites
 
@@ -26,7 +35,7 @@ A modern web application for downloading environmental sensor data from Aurassur
 
 ## Setup Instructions
 
-### 1. Environment Variables
+### 1. Environment Variables (Local Development)
 
 Create a `.env` file in the root directory with your Aurassure credentials:
 
@@ -153,9 +162,31 @@ This creates an optimized production build in `frontend/build/`.
 - `REACT_APP_API_URL` - Backend API URL (default: http://localhost:5000)
 - `PORT` - Server port (default: 5000 for local, 8080 for GCP)
 
+**Note**: In production (Google Cloud), credentials are fetched from **Google Secret Manager** automatically. See deployment section below.
+
 ## Deployment to Google Cloud Platform
 
-This application is ready to deploy to Google Cloud Platform. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+This application uses **Google Secret Manager** for secure credential storage in production.
+
+### Prerequisites for Deployment
+
+1. **Set up Google Secret Manager** (one-time setup):
+   - See [QUICK_START_SECRETS.md](QUICK_START_SECRETS.md) for quick setup
+   - Or see [SECRET_MANAGER_SETUP.md](SECRET_MANAGER_SETUP.md) for detailed instructions
+
+2. **Create secrets** (one-time):
+   ```bash
+   echo -n "your_access_id" | gcloud secrets create AccessId --data-file=-
+   echo -n "your_access_key" | gcloud secrets create AccessKey --data-file=-
+   ```
+
+3. **Grant permissions** (one-time):
+   ```bash
+   PROJECT_ID=$(gcloud config get-value project)
+   gcloud projects add-iam-policy-binding $PROJECT_ID \
+       --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
+       --role="roles/secretmanager.secretAccessor"
+   ```
 
 ### Quick Deploy to App Engine
 
@@ -172,7 +203,9 @@ gcloud app deploy
 ```bash
 # Build and deploy with one command
 gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/aurassure-app
-gcloud run deploy aurassure-app --image gcr.io/YOUR_PROJECT_ID/aurassure-app
+gcloud run deploy aurassure-app \
+  --image gcr.io/YOUR_PROJECT_ID/aurassure-app \
+  --update-secrets=AccessId=AccessId:latest,AccessKey=AccessKey:latest
 ```
 
 ### Using the Deployment Script
@@ -186,7 +219,10 @@ The deployment script provides an interactive menu to:
 - Deploy to Cloud Run
 - Build frontend only
 
-For complete deployment instructions, environment variable setup, and troubleshooting, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For complete deployment instructions, Secret Manager setup, and troubleshooting, see:
+- [QUICK_START_SECRETS.md](QUICK_START_SECRETS.md) - Quick Secret Manager setup
+- [SECRET_MANAGER_SETUP.md](SECRET_MANAGER_SETUP.md) - Detailed Secret Manager guide
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Full deployment documentation
 
 ## Security Notes
 
