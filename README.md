@@ -151,11 +151,34 @@ This creates an optimized production build in `frontend/build/`.
 - `AccessId` - Aurassure API Access ID (required)
 - `AccessKey` - Aurassure API Access Key (required)
 - `REACT_APP_API_URL` - Backend API URL (default: http://localhost:5000)
-- `PORT` - Server port (default: 5000 for local, 8080 for GCP)
+- `PORT` - Server port (default: 5000 for local, 8080 for GCP, 10000 for Render)
+- `CORS_ORIGINS` - Allowed CORS origins (default: *, set to specific URLs in production)
 
-## Deployment to Google Cloud Platform
+## Deployment Options
 
-This application is ready to deploy to Google Cloud Platform. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+This application supports multiple deployment platforms:
+
+### Option 1: GitHub Pages + Render (Recommended for Free Hosting)
+
+Deploy the frontend to GitHub Pages and backend to Render for a free, scalable solution.
+
+**Quick Start:**
+1. Deploy backend to [Render](https://render.com) (see [DEPLOYMENT_GITHUB_RENDER.md](DEPLOYMENT_GITHUB_RENDER.md))
+2. Set `REACT_APP_API_URL` repository variable in GitHub
+3. Push to `main` branch - GitHub Actions automatically deploys frontend
+
+**Benefits:**
+- Free hosting for both frontend and backend
+- Automatic deployments on push
+- HTTPS enabled by default
+- Good for public-facing applications
+
+For complete instructions, see [DEPLOYMENT_GITHUB_RENDER.md](DEPLOYMENT_GITHUB_RENDER.md).
+
+### Option 2: Google Cloud Platform
+
+This application is also ready to deploy to Google Cloud Platform. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
 
 ### Quick Deploy to App Engine
 

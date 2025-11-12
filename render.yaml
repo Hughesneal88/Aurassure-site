@@ -1,0 +1,20 @@
+services:
+  # Backend API Service
+  - type: web
+    name: aurassure-backend
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:app
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AccessId
+        sync: false
+      - key: AccessKey
+        sync: false
+    healthCheckPath: /api/health

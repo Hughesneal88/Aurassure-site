@@ -6,7 +6,17 @@ import io
 from aurasure import get_data
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+
+# Enable CORS for all routes
+# In production, you should configure allowed origins for security
+# For GitHub Pages + Render, set CORS_ORIGINS environment variable
+cors_origins = os.environ.get('CORS_ORIGINS', '*')
+if cors_origins == '*':
+    CORS(app)
+else:
+    # Parse comma-separated origins
+    origins = [origin.strip() for origin in cors_origins.split(',')]
+    CORS(app, origins=origins)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
