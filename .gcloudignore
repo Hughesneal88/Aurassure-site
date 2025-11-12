@@ -22,7 +22,8 @@ venv/
 ENV/
 *.egg-info/
 dist/
-build/
+backend/build/
+*.egg-info/build/
 
 # Testing
 .pytest_cache/
@@ -49,10 +50,9 @@ start.ps1
 README.md
 .env.example
 
-# Frontend source (only need built version)
-
-frontend/package.json
-frontend/package-lock.json
+# Frontend source files (not needed after build)
+frontend/src/
+frontend/public/
 
 # Data files
 *.csv
