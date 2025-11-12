@@ -12,7 +12,7 @@ handlers:
     secure: always
 
   # Serve static files from the React build
-  - url: /static
+  - url: /static/.*
     static_dir: frontend/build/static
     secure: always
 
