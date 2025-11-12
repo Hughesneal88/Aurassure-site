@@ -51,8 +51,8 @@ README.md
 .env.example
 
 # Frontend source files (not needed after build)
-frontend/src/
-frontend/public/
+# frontend/src/
+# frontend/public/
 
 # Data files
 *.csv
