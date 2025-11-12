@@ -33,7 +33,7 @@ function App() {
   useEffect(() => {
     const keepAlive = async () => {
       try {
-        await axios.get(`${API_BASE_URL}/api/health`);
+        await axios.get('https://aurassure-site.onrender.com');
       } catch (err) {
         // Silently fail - we don't want to disrupt the user experience
         console.debug('Keep-alive ping failed:', err.message);
