@@ -131,8 +131,13 @@ sensor_slugs = [
 settings = {
     "client_config_backend": "service",
     "service_config": {
-        "client_json_file_path": f"{script_dir}/service_account.json"
-    }
+        "client_json_file_path": f"{script_dir}/service_account.json",
+        "client_user_email": None
+    },
+    "oauth_scope": [
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/drive.file"
+    ]
 }
 gauth = GoogleAuth(settings=settings)
 gauth.ServiceAuth()
