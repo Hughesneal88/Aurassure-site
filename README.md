@@ -189,19 +189,28 @@ This creates an optimized production build in `frontend/build/`.
 
 To enable Nebo sensor data collection and storage:
 
-1. Place a `service_account.json` file in the `backend/` directory with Google Drive service account credentials
+1. **Service Account Setup**:
+   - Create a service account in your Google Cloud project
+   - Enable the Google Drive API for your project
+   - Ensure the service account has the following OAuth 2.0 scopes:
+     - `https://www.googleapis.com/auth/drive` (full Drive access)
+     - `https://www.googleapis.com/auth/drive.file` (file-specific access)
+   - Download the service account JSON key file and save it as `service_account.json` in the `backend/` directory
+
 2. **Configure the Google Drive folder**:
    - The `GOOGLE_DRIVE_FOLDER_ID` in `backend/nebo_data_manager.py` and `backend/nebo_script.py` must point to a folder in a **Shared Drive** (Team Drive)
    - Service accounts do not have storage quota for regular folders - they can only write to Shared Drives
    - Get the folder ID from the URL: `https://drive.google.com/drive/folders/YOUR_FOLDER_ID`
    - Ensure the service account has write access to the Shared Drive
+
 3. The Nebo integration will automatically activate when the service account file is present
 4. Data is automatically collected every 2 minutes and stored in Google Drive
 5. The Nebo data source option will appear in the frontend UI when available
 
-**Important**: If you encounter a "Service Accounts do not have storage quota" error, verify that your folder is in a Shared Drive, not a regular folder. See [Google's Shared Drives documentation](https://developers.google.com/workspace/drive/api/guides/about-shareddrives) for more information.
-
-**Note**: If the service account file is not present, the application will run normally with only Aurassure data available.
+**Important Notes**:
+- If you encounter a "Service Accounts do not have storage quota" error, verify that your folder is in a Shared Drive, not a regular folder. See [Google's Shared Drives documentation](https://developers.google.com/workspace/drive/api/guides/about-shareddrives) for more information.
+- If you encounter a "403 PERMISSION_DENIED" error with message "Method doesn't allow unregistered callers", ensure the Google Drive API is enabled in your Google Cloud project and the service account has proper OAuth scopes configured (this is handled automatically by the application code).
+- If the service account file is not present, the application will run normally with only Aurassure data available.
 
 ## Deployment Options
 
@@ -261,6 +270,21 @@ gcloud app deploy
 - Consider implementing rate limiting for production use
 
 ## Troubleshooting
+
+### Google Drive API 403 Error
+
+If you encounter a "403 PERMISSION_DENIED" error with message "Method doesn't allow unregistered callers":
+
+**Cause**: The Google Drive API requires proper OAuth 2.0 scopes to be configured when using service account authentication.
+
+**Solution**: 
+- Ensure you're using the latest version of the code (the OAuth scopes are now automatically configured)
+- Verify that the Google Drive API is enabled in your Google Cloud project:
+  1. Go to [Google Cloud Console](https://console.cloud.google.com)
+  2. Select your project
+  3. Navigate to "APIs & Services" > "Library"
+  4. Search for "Google Drive API" and ensure it's enabled
+- Verify your service account has appropriate permissions on the Shared Drive
 
 ### CORS Issues
 
