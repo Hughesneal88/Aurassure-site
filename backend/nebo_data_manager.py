@@ -137,16 +137,14 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
                 print(f"File uploaded to Google Drive: {filename}")
         except Exception as e:
             error_msg = str(e)
+            print(f"Error uploading to Google Drive: {e}")
             if "Service Accounts do not have storage quota" in error_msg or "quotaExceeded" in error_msg:
-                print(f"Error uploading to Google Drive: {e}")
                 print("=" * 80)
                 print("IMPORTANT: Service accounts require files to be stored in a Shared Drive!")
                 print("Please ensure that the GOOGLE_DRIVE_FOLDER_ID points to a folder in a Shared Drive.")
                 print("Regular folders won't work with service accounts.")
                 print("Learn more: https://developers.google.com/workspace/drive/api/guides/about-shareddrives")
                 print("=" * 80)
-            else:
-                print(f"Error uploading to Google Drive: {e}")
 
 
 def get_drive_instance():
