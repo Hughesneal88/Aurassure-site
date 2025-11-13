@@ -19,12 +19,19 @@ A modern web application for downloading environmental sensor data from Aurassur
 - 🔧 Sensor selection (individual or all sensors)
 - 💾 Multiple download formats (CSV, JSON)
 - 🚀 Fast and responsive
+- 🔄 **NEW**: Nebo sensor data integration with automatic 2-minute collection cycle
+- ☁️ **NEW**: Google Drive storage for Nebo sensor data
+- 📈 **NEW**: Download Nebo data within custom time ranges
 
 ## Architecture
 
 - **Backend**: Flask (Python) - REST API for data retrieval
 - **Frontend**: React - Modern, responsive user interface
-- **Data Source**: Aurassure IoT Platform API
+- **Data Sources**: 
+  - Aurassure IoT Platform API (real-time API access)
+  - Nebo Sensors API (periodic collection, Google Drive storage)
+- **Storage**: Google Drive integration for Nebo sensor data
+- **Scheduler**: Background job scheduler for automatic Nebo data collection every 2 minutes
 
 ## Prerequisites
 
@@ -32,6 +39,7 @@ A modern web application for downloading environmental sensor data from Aurassur
 - Node.js 14+
 - npm or yarn
 - Aurassure API credentials (Access ID and Access Key)
+- **(Optional)** Google Drive service account credentials for Nebo integration
 
 ## Local Development
 
@@ -99,21 +107,31 @@ These scripts will:
 ## Usage
 
 1. Open your browser and navigate to `http://localhost:3000`
-2. Select sensors (or choose "Select All Sensors")
-3. Choose a date/time range (defaults to last 2 days)
-4. Select your preferred download format (CSV or JSON)
-5. Click "Preview Data" to see a sample of the data
-6. Click "Download Data" to download the full dataset
+2. Select the data source (Aurassure or Nebo)
+3. Select sensors (or choose "Select All Sensors")
+4. Choose a date/time range (defaults to last 2 days)
+5. Select your preferred download format (CSV or JSON)
+6. Click "Preview Data" to see a sample of the data
+7. Click "Download Data" to download the full dataset
 
 ## API Endpoints
 
-### Backend API
+### Aurassure Endpoints
 
-- `GET /api/health` - Health check endpoint
-- `GET /api/sensors` - Get list of available sensors
-- `POST /api/download` - Download data
+- `GET /api/health` - Health check endpoint (includes Nebo availability status)
+- `GET /api/sensors` - Get list of available Aurassure sensors
+- `POST /api/download` - Download Aurassure data
   - Body: `{ sensors, start_time, end_time, format }`
-- `POST /api/preview` - Preview data (first 10 rows)
+- `POST /api/preview` - Preview Aurassure data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
+
+### Nebo Endpoints
+
+- `GET /api/nebo/sensors` - Get list of available Nebo sensors
+- `POST /api/nebo/download` - Download Nebo data from Google Drive
+  - Body: `{ sensors, start_time, end_time, format }`
+  - Note: Downloads data that has been collected and stored in Google Drive
+- `POST /api/nebo/preview` - Preview Nebo data (first 10 rows)
   - Body: `{ sensors, start_time, end_time }`
 
 ## Project Structure
@@ -121,9 +139,11 @@ These scripts will:
 ```
 Aurassure-site/
 ├── backend/
-│   ├── app.py              # Flask application
-│   ├── aurasure.py         # Data fetching logic
-│   └── requirements.txt    # Python dependencies
+│   ├── app.py                  # Flask application with API endpoints
+│   ├── aurasure.py             # Aurassure data fetching logic
+│   ├── nebo_data_manager.py    # Nebo data collection and retrieval
+│   ├── nebo_script.py          # Standalone Nebo collection script
+│   └── requirements.txt        # Python dependencies
 ├── frontend/
 │   ├── public/
 │   ├── src/
@@ -159,11 +179,22 @@ This creates an optimized production build in `frontend/build/`.
 
 ## Environment Variables
 
-- `AccessId` - Aurassure API Access ID (required)
-- `AccessKey` - Aurassure API Access Key (required)
+- `AccessId` - Aurassure API Access ID (required for Aurassure data)
+- `AccessKey` - Aurassure API Access Key (required for Aurassure data)
 - `REACT_APP_API_URL` - Backend API URL (default: http://localhost:5000)
 - `PORT` - Server port (default: 5000 for local, 8080 for GCP, 10000 for Render)
 - `CORS_ORIGINS` - Allowed CORS origins (default: *, set to specific URLs in production)
+
+### Nebo Integration (Optional)
+
+To enable Nebo sensor data collection and storage:
+
+1. Place a `service_account.json` file in the `backend/` directory with Google Drive service account credentials
+2. The Nebo integration will automatically activate when the service account file is present
+3. Data is automatically collected every 2 minutes and stored in Google Drive
+4. The Nebo data source option will appear in the frontend UI when available
+
+**Note**: If the service account file is not present, the application will run normally with only Aurassure data available.
 
 ## Deployment Options
 
