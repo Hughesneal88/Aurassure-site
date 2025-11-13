@@ -106,7 +106,15 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
                 file.Upload()
                 print(f"File uploaded to Google Drive: {filename}")
         except Exception as e:
+            error_msg = str(e)
             print(f"Error uploading to Google Drive: {e}")
+            if "Service Accounts do not have storage quota" in error_msg or "quotaExceeded" in error_msg:
+                print("=" * 80)
+                print("IMPORTANT: Service accounts require files to be stored in a Shared Drive!")
+                print("Please ensure that the GOOGLE_DRIVE_FOLDER_ID points to a folder in a Shared Drive.")
+                print("Regular folders won't work with service accounts.")
+                print("Learn more: https://developers.google.com/workspace/drive/api/guides/about-shareddrives")
+                print("=" * 80)
 
 sensor_slugs = [
     "b4e8bdc2-5912-42d8-a032-0b48835a6bc1",
@@ -131,8 +139,11 @@ gauth.ServiceAuth()
 drive = GoogleDrive(gauth)
 
 # Specify your Google Drive folder ID here
-# You can find this in the URL when you open the folder in Google Drive
-GOOGLE_DRIVE_FOLDER_ID = '1KLu7ZRKxEDWr2kqT1aQ5aIJeJ-qnFN41' # Replace with your actual folder ID
+# IMPORTANT: When using a service account, the folder MUST be in a Shared Drive (Team Drive)
+# Service accounts do not have storage quota for regular folders
+# You can find this ID in the URL when you open the folder in Google Drive
+# Example: https://drive.google.com/drive/folders/YOUR_FOLDER_ID
+GOOGLE_DRIVE_FOLDER_ID = '1KLu7ZRKxEDWr2kqT1aQ5aIJeJ-qnFN41' # Replace with your actual shared drive folder ID
 
 
 # Run until 'exit' is typed or Ctrl+C is pressed
