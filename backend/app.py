@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import io
 import re
+import requests
 from aurasure import get_data
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
@@ -24,6 +25,17 @@ else:
 # Initialize background scheduler for Nebo data collection
 scheduler = BackgroundScheduler()
 
+# Keep-alive function to prevent Render service from spinning down
+def keep_alive():
+    """Ping the Render service URL to keep it active"""
+    render_url = os.environ.get('RENDER_SERVICE_URL', 'https://aurassure-site.onrender.com')
+    try:
+        requests.get(render_url, timeout=10)
+        print(f"Keep-alive ping successful to {render_url}")
+    except Exception as e:
+        # Silently fail - we don't want to disrupt the service
+        print(f"Keep-alive ping failed: {e}")
+
 # Import Nebo data manager functions
 try:
     from nebo_data_manager import (
@@ -34,16 +46,22 @@ try:
     
     # Schedule the Nebo data collection to run every 2 minutes
     scheduler.add_job(func=collect_nebo_data, trigger="interval", minutes=2)
-    scheduler.start()
     print("Nebo data collection scheduler started (runs every 2 minutes)")
-    
-    # Shut down the scheduler when exiting the app
-    atexit.register(lambda: scheduler.shutdown())
     
     NEBO_ENABLED = True
 except Exception as e:
     print(f"Warning: Nebo integration not available: {e}")
     NEBO_ENABLED = False
+
+# Schedule keep-alive ping every 30 seconds
+scheduler.add_job(func=keep_alive, trigger="interval", seconds=30)
+print("Keep-alive scheduler started (runs every 30 seconds)")
+
+# Start the scheduler
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 def sanitize_filename(filename):
     """Sanitize filename to prevent path injection"""

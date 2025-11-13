@@ -75,24 +75,6 @@ function App() {
     setPreview(null);
   }, [fetchSensors]);
 
-  // Keep-alive functionality - ping server every 30 seconds to prevent inactivity timeout
-  useEffect(() => {
-    const keepAlive = async () => {
-      try {
-        await axios.get('https://aurassure-site.onrender.com');
-      } catch (err) {
-        // Silently fail - we don't want to disrupt the user experience
-        console.debug('Keep-alive ping failed:', err.message);
-      }
-    };
-
-    // Set up interval to ping every 30 seconds
-    const intervalId = setInterval(keepAlive, 30000);
-
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
-
   const handleSensorToggle = (sensorId) => {
     setSelectAll(false);
     setSelectedSensors(prev => {
