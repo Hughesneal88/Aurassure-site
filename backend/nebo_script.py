@@ -143,35 +143,8 @@ sensor_slugs = [
 GOOGLE_DRIVE_FOLDER_ID = '1KLu7ZRKxEDWr2kqT1aQ5aIJeJ-qnFN41' # Replace with your actual shared drive folder ID
 
 
-if __name__ == "__main__":
-    print("=" * 80)
-    print("WARNING: This script is DEPRECATED!")
-    print("=" * 80)
-    print()
-    print("The nebo_script.py standalone mode should NOT be used.")
-    print("Instead, use the Flask application with the integrated scheduler.")
-    print()
-    print("The Flask app (backend/app.py) automatically runs the Nebo data collection")
-    print("every 2 minutes using the APScheduler background scheduler.")
-    print()
-    print("To use the proper scheduler:")
-    print("  1. Make sure service_account.json is in the backend/ directory")
-    print("  2. Run: python backend/app.py")
-    print("  3. The scheduler will automatically collect Nebo data every 2 minutes")
-    print()
-    print("Running this script directly may cause conflicts with the scheduler")
-    print("and could lead to duplicate data collection or resource conflicts.")
-    print("=" * 80)
-    print()
-    response = input("Do you still want to run this deprecated script? (yes/no): ")
-    if response.lower() != "yes":
-        print("Exiting. Please use the Flask app with the scheduler instead.")
-        exit(0)
-    
-    print("\nStarting deprecated standalone mode...")
-    print("Initializing Google Drive connection...")
-    
-    # Google Drive setup (only initialize if user confirms to run)
+def get_drive_instance():
+    """Initialize and return a Google Drive instance"""
     settings = {
         "client_config_backend": "service",
         "service_config": {
@@ -180,25 +153,50 @@ if __name__ == "__main__":
     }
     gauth = GoogleAuth(settings=settings)
     gauth.ServiceAuth()
-    drive = GoogleDrive(gauth)
-    
+    return GoogleDrive(gauth)
+
+
+def collect_nebo_data():
+    """Collect data from all Nebo sensors and save to Google Drive - for use with scheduler"""
+    try:
+        drive = get_drive_instance()
+        
+        for slug in sensor_slugs:
+            filename = f"{slug}_minute_history.csv"
+            local_filepath = os.path.join(script_dir, filename)
+            data = download_latest_sensor_data(TOKEN, CODE, slug)
+
+            if data:
+                merge_and_save_data(data, local_filepath, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
+            else:
+                print(f"No data for {slug} at this cycle.")
+        
+        print(f"Nebo data collection completed at {datetime.now(timezone.utc)}")
+    except Exception as e:
+        print(f"Error in collect_nebo_data: {e}")
+
+
+if __name__ == "__main__":
+    print("Starting Nebo data collection in standalone mode...")
     print("Press Ctrl+C to stop.")
     print()
     
-    # Run until 'exit' is typed or Ctrl+C is pressed
+    # Google Drive setup
+    drive = get_drive_instance()
+    
+    # Run until Ctrl+C is pressed
     try:
         while True:
             for slug in sensor_slugs:
                 filename = f"{slug}_minute_history.csv"
+                local_filepath = os.path.join(script_dir, filename)
                 data = download_latest_sensor_data(TOKEN, CODE, slug)
 
                 if data:
-                    # Pass drive and folder_id to save to Google Drive
-                    merge_and_save_data(data, filename, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
-                    # If you also want to save locally, you can call merge_and_save_data(data, filename) again without drive arguments
+                    merge_and_save_data(data, local_filepath, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
                 else:
                     print(f"No data for {slug} at this cycle.")
-            print("Sleeping for 2 minutes before next fetch cycle... (Type 'exit' and press Enter to stop)")
+            print("Sleeping for 2 minutes before next fetch cycle...")
             time.sleep(2 * 60)
 
     except KeyboardInterrupt:

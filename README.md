@@ -141,8 +141,8 @@ Aurassure-site/
 ├── backend/
 │   ├── app.py                  # Flask application with API endpoints and scheduler
 │   ├── aurasure.py             # Aurassure data fetching logic
-│   ├── nebo_data_manager.py    # Nebo data collection and retrieval (used by scheduler)
-│   ├── nebo_script.py          # DEPRECATED: Legacy standalone script (use app.py instead)
+│   ├── nebo_data_manager.py    # Nebo data retrieval functions
+│   ├── nebo_script.py          # Nebo data collection script (used by scheduler)
 │   └── requirements.txt        # Python dependencies
 ├── frontend/
 │   ├── public/
@@ -191,17 +191,17 @@ To enable Nebo sensor data collection and storage:
 
 1. Place a `service_account.json` file in the `backend/` directory with Google Drive service account credentials
 2. **Configure the Google Drive folder**:
-   - The `GOOGLE_DRIVE_FOLDER_ID` in `backend/nebo_data_manager.py` must point to a folder in a **Shared Drive** (Team Drive)
+   - The `GOOGLE_DRIVE_FOLDER_ID` in `backend/nebo_script.py` must point to a folder in a **Shared Drive** (Team Drive)
    - Service accounts do not have storage quota for regular folders - they can only write to Shared Drives
    - Get the folder ID from the URL: `https://drive.google.com/drive/folders/YOUR_FOLDER_ID`
    - Ensure the service account has write access to the Shared Drive
 3. The Nebo integration will automatically activate when the service account file is present
-4. **Data is automatically collected every 2 minutes** by the Flask app's background scheduler (APScheduler)
+4. **Data is automatically collected every 2 minutes** by the Flask app's background scheduler (APScheduler) which runs the `collect_nebo_data()` function from `nebo_script.py`
 5. The Nebo data source option will appear in the frontend UI when available
 
 **Important**: 
 - If you encounter a "Service Accounts do not have storage quota" error, verify that your folder is in a Shared Drive, not a regular folder. See [Google's Shared Drives documentation](https://developers.google.com/workspace/drive/api/guides/about-shareddrives) for more information.
-- **Do NOT run `nebo_script.py` directly** - it is deprecated. The Flask app (`app.py`) includes an integrated scheduler that handles data collection automatically.
+- The `nebo_script.py` can also be run standalone for testing or manual data collection.
 
 **Note**: If the service account file is not present, the application will run normally with only Aurassure data available.
 

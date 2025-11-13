@@ -24,10 +24,10 @@ else:
 # Initialize background scheduler for Nebo data collection
 scheduler = BackgroundScheduler()
 
-# Import Nebo data manager functions
+# Import Nebo data collection function from nebo_script
 try:
+    from nebo_script import collect_nebo_data
     from nebo_data_manager import (
-        collect_nebo_data,
         get_nebo_sensors,
         download_nebo_data_from_drive
     )
