@@ -79,13 +79,26 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
     if old_df is not None:
         # Merge the new data with the old data
         combined_df = pd.concat([old_df, new_df], ignore_index=True)
-        # Drop duplicates across all columns
-        combined_df = combined_df.drop_duplicates(keep='last')
+        
+        # Drop duplicates - prioritize based on timestamp if available
+        # This prevents overwriting existing data with duplicate entries
+        if 'timestamp' in combined_df.columns:
+            # Deduplicate based on timestamp, keeping the first occurrence
+            # to preserve original data and avoid overwriting
+            combined_df = combined_df.drop_duplicates(subset=['timestamp'], keep='first')
+            # Sort by timestamp for consistency
+            combined_df = combined_df.sort_values('timestamp').reset_index(drop=True)
+        else:
+            # Fallback: deduplicate across all columns if no timestamp
+            combined_df = combined_df.drop_duplicates(keep='first')
+        
         # Save the merged data back to the file
         combined_df.to_csv(filename, index=False)
+        print(f"Data merged: {len(old_df)} existing + {len(new_df)} new = {len(combined_df)} total records")
     else:
         # If no existing data, save the new data directly
         new_df.to_csv(filename, index=False)
+        print(f"New data file created with {len(new_df)} records")
 
     print(f"Data saved to {filename}")
 
@@ -146,21 +159,50 @@ drive = GoogleDrive(gauth)
 GOOGLE_DRIVE_FOLDER_ID = '1KLu7ZRKxEDWr2kqT1aQ5aIJeJ-qnFN41' # Replace with your actual shared drive folder ID
 
 
-# Run until 'exit' is typed or Ctrl+C is pressed
-try:
-    while True:
-        for slug in sensor_slugs:
-            filename = f"{slug}_minute_history.csv"
-            data = download_latest_sensor_data(TOKEN, CODE, slug)
+if __name__ == "__main__":
+    print("=" * 80)
+    print("WARNING: This script is DEPRECATED!")
+    print("=" * 80)
+    print()
+    print("The nebo_script.py standalone mode should NOT be used.")
+    print("Instead, use the Flask application with the integrated scheduler.")
+    print()
+    print("The Flask app (backend/app.py) automatically runs the Nebo data collection")
+    print("every 2 minutes using the APScheduler background scheduler.")
+    print()
+    print("To use the proper scheduler:")
+    print("  1. Make sure service_account.json is in the backend/ directory")
+    print("  2. Run: python backend/app.py")
+    print("  3. The scheduler will automatically collect Nebo data every 2 minutes")
+    print()
+    print("Running this script directly may cause conflicts with the scheduler")
+    print("and could lead to duplicate data collection or resource conflicts.")
+    print("=" * 80)
+    print()
+    response = input("Do you still want to run this deprecated script? (yes/no): ")
+    if response.lower() != "yes":
+        print("Exiting. Please use the Flask app with the scheduler instead.")
+        exit(0)
+    
+    print("\nStarting deprecated standalone mode...")
+    print("Press Ctrl+C to stop.")
+    print()
+    
+    # Run until 'exit' is typed or Ctrl+C is pressed
+    try:
+        while True:
+            for slug in sensor_slugs:
+                filename = f"{slug}_minute_history.csv"
+                data = download_latest_sensor_data(TOKEN, CODE, slug)
 
-            if data:
-                # Pass drive and folder_id to save to Google Drive
-                merge_and_save_data(data, filename, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
-                # If you also want to save locally, you can call merge_and_save_data(data, filename) again without drive arguments
-            else:
-                print(f"No data for {slug} at this cycle.")
-        print("Sleeping for 2 minutes before next fetch cycle... (Type 'exit' and press Enter to stop)")
-        time.sleep(2 * 60)
+                if data:
+                    # Pass drive and folder_id to save to Google Drive
+                    merge_and_save_data(data, filename, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
+                    # If you also want to save locally, you can call merge_and_save_data(data, filename) again without drive arguments
+                else:
+                    print(f"No data for {slug} at this cycle.")
+            print("Sleeping for 2 minutes before next fetch cycle... (Type 'exit' and press Enter to stop)")
+            time.sleep(2 * 60)
 
-except KeyboardInterrupt:
-    print("\nScript terminated by user (Ctrl+C).")
+    except KeyboardInterrupt:
+        print("\nScript terminated by user (Ctrl+C).")
