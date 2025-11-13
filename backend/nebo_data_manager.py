@@ -79,10 +79,30 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
         return
 
     new_df = pd.DataFrame(records)
+    old_df = None
 
-    if os.path.exists(filename):
-        # Read the existing file
+    # If Google Drive integration is enabled, download existing data from Drive first
+    if drive and folder_id:
+        try:
+            file_list = drive.ListFile({'q': f"'{folder_id}' in parents and title='{filename}' and trashed=false"}).GetList()
+            if file_list:
+                # Download existing data from Google Drive
+                file = file_list[0]
+                content = file.GetContentString()
+                old_df = pd.read_csv(io.StringIO(content))
+                print(f"Downloaded existing data from Google Drive: {filename}")
+        except Exception as e:
+            print(f"Error downloading from Google Drive: {e}")
+            old_df = None
+
+    # If we didn't get data from Drive, try local file
+    if old_df is None and os.path.exists(filename):
+        # Read the existing local file
         old_df = pd.read_csv(filename)
+        print(f"Loaded existing local data: {filename}")
+
+    # Merge with existing data if available
+    if old_df is not None:
         # Merge the new data with the old data
         combined_df = pd.concat([old_df, new_df], ignore_index=True)
         # Drop duplicates across all columns
@@ -90,7 +110,7 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
         # Save the merged data back to the file
         combined_df.to_csv(filename, index=False)
     else:
-        # If the file doesn't exist, save the new data directly
+        # If no existing data, save the new data directly
         new_df.to_csv(filename, index=False)
 
     print(f"Data saved to {filename}")
