@@ -135,22 +135,6 @@ sensor_slugs = [
     "df2378c8-e12c-406e-a38a-c2fd3db0509b"
 ]
 
-# # Google Drive setup
-# gauth = GoogleAuth()
-# gauth.LoadClientConfigFile("client_secret.json")
-# if gauth.credentials is None or gauth.access_token_expired:
-#     gauth.LocalWebserverAuth() # Creates local webserver and auto handles authentication.
-
-settings = {
-    "client_config_backend": "service",
-    "service_config": {
-        "client_json_file_path": f"{script_dir}/service_account.json"
-    }
-}
-gauth = GoogleAuth(settings=settings)
-gauth.ServiceAuth()
-drive = GoogleDrive(gauth)
-
 # Specify your Google Drive folder ID here
 # IMPORTANT: When using a service account, the folder MUST be in a Shared Drive (Team Drive)
 # Service accounts do not have storage quota for regular folders
@@ -185,6 +169,19 @@ if __name__ == "__main__":
         exit(0)
     
     print("\nStarting deprecated standalone mode...")
+    print("Initializing Google Drive connection...")
+    
+    # Google Drive setup (only initialize if user confirms to run)
+    settings = {
+        "client_config_backend": "service",
+        "service_config": {
+            "client_json_file_path": f"{script_dir}/service_account.json"
+        }
+    }
+    gauth = GoogleAuth(settings=settings)
+    gauth.ServiceAuth()
+    drive = GoogleDrive(gauth)
+    
     print("Press Ctrl+C to stop.")
     print()
     
