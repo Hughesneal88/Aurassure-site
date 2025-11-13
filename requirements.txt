@@ -4,6 +4,6 @@ requests==2.31.0
 pandas==2.1.4
 python-dotenv==1.0.0
 gunicorn==21.2.0
-PyDrive2==1.17.0
+PyDrive2==1.21.3
 APScheduler==3.10.4
 pyOpenSSL==22.1.0
