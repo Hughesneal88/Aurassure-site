@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -18,6 +18,39 @@ function App() {
   const [success, setSuccess] = useState(null);
   const [neboEnabled, setNeboEnabled] = useState(false);
 
+  const formatDateTimeLocal = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const checkNeboStatus = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/health`);
+      setNeboEnabled(response.data.nebo_enabled || false);
+    } catch (err) {
+      console.error('Error checking Nebo status:', err);
+      setNeboEnabled(false);
+    }
+  }, []);
+
+  const fetchSensors = useCallback(async () => {
+    try {
+      const endpoint = dataSource === 'nebo' 
+        ? `${API_BASE_URL}/api/nebo/sensors`
+        : `${API_BASE_URL}/api/sensors`;
+      
+      const response = await axios.get(endpoint);
+      setSensors(response.data.sensors);
+    } catch (err) {
+      console.error('Error fetching sensors:', err);
+      setError('Failed to fetch sensors');
+    }
+  }, [dataSource]);
+
   useEffect(() => {
     // Check if Nebo is enabled
     checkNeboStatus();
@@ -32,7 +65,7 @@ function App() {
     
     setEndTime(formatDateTimeLocal(end));
     setStartTime(formatDateTimeLocal(start));
-  }, []);
+  }, [checkNeboStatus, fetchSensors]);
 
   // Re-fetch sensors when data source changes
   useEffect(() => {
@@ -40,7 +73,7 @@ function App() {
     setSelectedSensors([]);
     setSelectAll(true);
     setPreview(null);
-  }, [dataSource]);
+  }, [fetchSensors]);
 
   // Keep-alive functionality - ping server every 30 seconds to prevent inactivity timeout
   useEffect(() => {
@@ -59,39 +92,6 @@ function App() {
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
-
-  const formatDateTimeLocal = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  const checkNeboStatus = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/health`);
-      setNeboEnabled(response.data.nebo_enabled || false);
-    } catch (err) {
-      console.error('Error checking Nebo status:', err);
-      setNeboEnabled(false);
-    }
-  };
-
-  const fetchSensors = async () => {
-    try {
-      const endpoint = dataSource === 'nebo' 
-        ? `${API_BASE_URL}/api/nebo/sensors`
-        : `${API_BASE_URL}/api/sensors`;
-      
-      const response = await axios.get(endpoint);
-      setSensors(response.data.sensors);
-    } catch (err) {
-      console.error('Error fetching sensors:', err);
-      setError('Failed to fetch sensors');
-    }
-  };
 
   const handleSensorToggle = (sensorId) => {
     setSelectAll(false);
