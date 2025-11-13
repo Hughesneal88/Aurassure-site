@@ -3,6 +3,7 @@ from flask_cors import CORS
 from datetime import datetime
 import os
 import io
+import re
 from aurasure import get_data
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
@@ -43,6 +44,17 @@ try:
 except Exception as e:
     print(f"Warning: Nebo integration not available: {e}")
     NEBO_ENABLED = False
+
+def sanitize_filename(filename):
+    """Sanitize filename to prevent path injection"""
+    # Remove any directory path components
+    filename = os.path.basename(filename)
+    # Replace any potentially dangerous characters
+    filename = re.sub(r'[^\w\-_\.]', '_', filename)
+    # Ensure filename doesn't start with a dot
+    if filename.startswith('.'):
+        filename = '_' + filename
+    return filename
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -199,7 +211,7 @@ def get_nebo_sensors_endpoint():
         return jsonify({"sensors": sensors})
     except Exception as e:
         print(f"Error in get_nebo_sensors: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to retrieve Nebo sensors"}), 500
 
 @app.route('/api/nebo/download', methods=['POST'])
 def download_nebo_data():
@@ -241,24 +253,27 @@ def download_nebo_data():
         if df is None or df.empty:
             return jsonify({"error": "No data available for the specified parameters"}), 404
         
-        # Create a temporary filename
+        # Create a temporary filename with safe directory
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        temp_filename = f"nebo_data_{timestamp}.{format_type}"
+        safe_filename = sanitize_filename(f"nebo_data_{timestamp}.{format_type}")
+        # Use absolute path in a safe temporary directory
+        temp_dir = os.path.abspath('/tmp')
+        temp_filepath = os.path.join(temp_dir, safe_filename)
         
         # Save data to file
         if format_type == 'csv':
-            df.to_csv(temp_filename, index=False)
+            df.to_csv(temp_filepath, index=False)
         elif format_type == 'json':
-            df.to_json(temp_filename, orient='records', lines=True)
+            df.to_json(temp_filepath, orient='records', lines=True)
         else:
             return jsonify({"error": "Invalid format. Use 'csv' or 'json'"}), 400
         
         # Send file
-        if os.path.exists(temp_filename):
+        if os.path.exists(temp_filepath):
             response = send_file(
-                temp_filename,
+                temp_filepath,
                 as_attachment=True,
-                download_name=temp_filename,
+                download_name=safe_filename,
                 mimetype='application/octet-stream'
             )
             
@@ -266,8 +281,8 @@ def download_nebo_data():
             @response.call_on_close
             def cleanup():
                 try:
-                    if os.path.exists(temp_filename):
-                        os.remove(temp_filename)
+                    if os.path.exists(temp_filepath):
+                        os.remove(temp_filepath)
                 except Exception as e:
                     print(f"Error cleaning up file: {e}")
             
@@ -277,7 +292,7 @@ def download_nebo_data():
             
     except Exception as e:
         print(f"Error in download_nebo_data: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to download Nebo data"}), 500
 
 @app.route('/api/nebo/preview', methods=['POST'])
 def preview_nebo_data():
@@ -331,7 +346,7 @@ def preview_nebo_data():
             
     except Exception as e:
         print(f"Error in preview_nebo_data: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Failed to preview Nebo data"}), 500
 
 if __name__ == '__main__':
     # Use PORT environment variable for Google Cloud, default to 5000 for local development
