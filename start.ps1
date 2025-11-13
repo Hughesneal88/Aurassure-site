@@ -15,7 +15,7 @@ if (-not (Test-Path ".env")) {
 # Start backend
 Write-Host " Starting Flask backend..." -ForegroundColor Green
 Set-Location backend
-$backendProcess = Start-Process -FilePath "python3" -ArgumentList "app.py" -PassThru -NoNewWindow
+$backendProcess = Start-Process -FilePath "python3.11" -ArgumentList "app.py" -PassThru -NoNewWindow
 Set-Location ..
 
 # Wait a moment for backend to start
@@ -24,7 +24,7 @@ Start-Sleep -Seconds 2
 # Start frontend
 Write-Host " Starting React frontend..." -ForegroundColor Green
 Set-Location frontend
-$frontendProcess = Start-Process -FilePath "npm" -ArgumentList "start" -PassThru -NoNewWindow
+$frontendProcess = Start-Process -FilePath "C:\Program Files\nodejs\npm.cmd" -ArgumentList "start" -PassThru -NoNewWindow
 Set-Location ..
 
 Write-Host ""
