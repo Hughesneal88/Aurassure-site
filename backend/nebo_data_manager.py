@@ -109,13 +109,26 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
     if old_df is not None:
         # Merge the new data with the old data
         combined_df = pd.concat([old_df, new_df], ignore_index=True)
-        # Drop duplicates across all columns
-        combined_df = combined_df.drop_duplicates(keep='last')
+        
+        # Drop duplicates - prioritize based on timestamp if available
+        # This prevents overwriting existing data with duplicate entries
+        if 'timestamp' in combined_df.columns:
+            # Deduplicate based on timestamp, keeping the first occurrence
+            # to preserve original data and avoid overwriting
+            combined_df = combined_df.drop_duplicates(subset=['timestamp'], keep='first')
+            # Sort by timestamp for consistency
+            combined_df = combined_df.sort_values('timestamp').reset_index(drop=True)
+        else:
+            # Fallback: deduplicate across all columns if no timestamp
+            combined_df = combined_df.drop_duplicates(keep='first')
+        
         # Save the merged data back to the file
         combined_df.to_csv(filename, index=False)
+        print(f"Data merged: {len(old_df)} existing + {len(new_df)} new = {len(combined_df)} total records")
     else:
         # If no existing data, save the new data directly
         new_df.to_csv(filename, index=False)
+        print(f"New data file created with {len(new_df)} records")
 
     print(f"Data saved to {filename}")
 

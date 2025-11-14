@@ -79,13 +79,26 @@ def merge_and_save_data(new_data, filename, drive=None, folder_id=None):
     if old_df is not None:
         # Merge the new data with the old data
         combined_df = pd.concat([old_df, new_df], ignore_index=True)
-        # Drop duplicates across all columns
-        combined_df = combined_df.drop_duplicates(keep='last')
+        
+        # Drop duplicates - prioritize based on timestamp if available
+        # This prevents overwriting existing data with duplicate entries
+        if 'timestamp' in combined_df.columns:
+            # Deduplicate based on timestamp, keeping the first occurrence
+            # to preserve original data and avoid overwriting
+            combined_df = combined_df.drop_duplicates(subset=['timestamp'], keep='first')
+            # Sort by timestamp for consistency
+            combined_df = combined_df.sort_values('timestamp').reset_index(drop=True)
+        else:
+            # Fallback: deduplicate across all columns if no timestamp
+            combined_df = combined_df.drop_duplicates(keep='first')
+        
         # Save the merged data back to the file
         combined_df.to_csv(filename, index=False)
+        print(f"Data merged: {len(old_df)} existing + {len(new_df)} new = {len(combined_df)} total records")
     else:
         # If no existing data, save the new data directly
         new_df.to_csv(filename, index=False)
+        print(f"New data file created with {len(new_df)} records")
 
     print(f"Data saved to {filename}")
 
@@ -122,22 +135,6 @@ sensor_slugs = [
     "df2378c8-e12c-406e-a38a-c2fd3db0509b"
 ]
 
-# # Google Drive setup
-# gauth = GoogleAuth()
-# gauth.LoadClientConfigFile("client_secret.json")
-# if gauth.credentials is None or gauth.access_token_expired:
-#     gauth.LocalWebserverAuth() # Creates local webserver and auto handles authentication.
-
-settings = {
-    "client_config_backend": "service",
-    "service_config": {
-        "client_json_file_path": f"{script_dir}/service_account.json"
-    }
-}
-gauth = GoogleAuth(settings=settings)
-gauth.ServiceAuth()
-drive = GoogleDrive(gauth)
-
 # Specify your Google Drive folder ID here
 # IMPORTANT: When using a service account, the folder MUST be in a Shared Drive (Team Drive)
 # Service accounts do not have storage quota for regular folders
@@ -146,21 +143,61 @@ drive = GoogleDrive(gauth)
 GOOGLE_DRIVE_FOLDER_ID = '1KLu7ZRKxEDWr2kqT1aQ5aIJeJ-qnFN41' # Replace with your actual shared drive folder ID
 
 
-# Run until 'exit' is typed or Ctrl+C is pressed
-try:
-    while True:
+def get_drive_instance():
+    """Initialize and return a Google Drive instance"""
+    settings = {
+        "client_config_backend": "service",
+        "service_config": {
+            "client_json_file_path": f"{script_dir}/service_account.json"
+        }
+    }
+    gauth = GoogleAuth(settings=settings)
+    gauth.ServiceAuth()
+    return GoogleDrive(gauth)
+
+
+def collect_nebo_data():
+    """Collect data from all Nebo sensors and save to Google Drive - for use with scheduler"""
+    try:
+        drive = get_drive_instance()
+        
         for slug in sensor_slugs:
             filename = f"{slug}_minute_history.csv"
+            local_filepath = os.path.join(script_dir, filename)
             data = download_latest_sensor_data(TOKEN, CODE, slug)
 
             if data:
-                # Pass drive and folder_id to save to Google Drive
-                merge_and_save_data(data, filename, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
-                # If you also want to save locally, you can call merge_and_save_data(data, filename) again without drive arguments
+                merge_and_save_data(data, local_filepath, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
             else:
                 print(f"No data for {slug} at this cycle.")
-        print("Sleeping for 2 minutes before next fetch cycle... (Type 'exit' and press Enter to stop)")
-        time.sleep(2 * 60)
+        
+        print(f"Nebo data collection completed at {datetime.now(timezone.utc)}")
+    except Exception as e:
+        print(f"Error in collect_nebo_data: {e}")
 
-except KeyboardInterrupt:
-    print("\nScript terminated by user (Ctrl+C).")
+
+if __name__ == "__main__":
+    print("Starting Nebo data collection in standalone mode...")
+    print("Press Ctrl+C to stop.")
+    print()
+    
+    # Google Drive setup
+    drive = get_drive_instance()
+    
+    # Run until Ctrl+C is pressed
+    try:
+        while True:
+            for slug in sensor_slugs:
+                filename = f"{slug}_minute_history.csv"
+                local_filepath = os.path.join(script_dir, filename)
+                data = download_latest_sensor_data(TOKEN, CODE, slug)
+
+                if data:
+                    merge_and_save_data(data, local_filepath, drive=drive, folder_id=GOOGLE_DRIVE_FOLDER_ID)
+                else:
+                    print(f"No data for {slug} at this cycle.")
+            print("Sleeping for 2 minutes before next fetch cycle...")
+            time.sleep(2 * 60)
+
+    except KeyboardInterrupt:
+        print("\nScript terminated by user (Ctrl+C).")
