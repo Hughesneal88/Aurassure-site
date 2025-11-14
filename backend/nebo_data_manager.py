@@ -180,7 +180,7 @@ def collect_nebo_data():
         
         for slug in SENSOR_SLUGS:
             filename = f"{slug}_minute_history.csv"
-            local_filepath = os.path.join(script_dir, filename)
+            local_filepath = filename
             data = download_latest_sensor_data(TOKEN, CODE, slug)
 
             if data:

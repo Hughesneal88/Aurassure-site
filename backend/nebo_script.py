@@ -143,23 +143,21 @@ sensor_slugs = [
 GOOGLE_DRIVE_FOLDER_ID = '1KLu7ZRKxEDWr2kqT1aQ5aIJeJ-qnFN41' # Replace with your actual shared drive folder ID
 
 
-def get_drive_instance():
-    """Initialize and return a Google Drive instance"""
-    settings = {
-        "client_config_backend": "service",
-        "service_config": {
-            "client_json_file_path": f"{script_dir}/service_account.json"
-        }
+settings = {
+    "client_config_backend": "service",
+    "service_config": {
+        "client_json_file_path": f"{script_dir}/service_account.json"
     }
-    gauth = GoogleAuth(settings=settings)
-    gauth.ServiceAuth()
-    return GoogleDrive(gauth)
+}
+gauth = GoogleAuth(settings=settings)
+gauth.ServiceAuth()
+drive = GoogleDrive(gauth)
 
 
 def collect_nebo_data():
     """Collect data from all Nebo sensors and save to Google Drive - for use with scheduler"""
     try:
-        drive = get_drive_instance()
+        
         
         for slug in sensor_slugs:
             filename = f"{slug}_minute_history.csv"
@@ -182,14 +180,14 @@ if __name__ == "__main__":
     print()
     
     # Google Drive setup
-    drive = get_drive_instance()
+    
     
     # Run until Ctrl+C is pressed
     try:
         while True:
             for slug in sensor_slugs:
                 filename = f"{slug}_minute_history.csv"
-                local_filepath = os.path.join(script_dir, filename)
+                local_filepath = filename
                 data = download_latest_sensor_data(TOKEN, CODE, slug)
 
                 if data:
