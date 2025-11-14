@@ -22,6 +22,7 @@ A modern web application for downloading environmental sensor data from Aurassur
 - 🔄 **NEW**: Nebo sensor data integration with automatic 2-minute collection cycle
 - ☁️ **NEW**: Google Drive storage for Nebo sensor data
 - 📈 **NEW**: Download Nebo data within custom time ranges
+- 🌡️ **NEW**: Crafted Climate sensor data integration
 
 ## Architecture
 
@@ -30,6 +31,7 @@ A modern web application for downloading environmental sensor data from Aurassur
 - **Data Sources**: 
   - Aurassure IoT Platform API (real-time API access)
   - Nebo Sensors API (periodic collection, Google Drive storage)
+  - Crafted Climate API (on-demand data retrieval)
 - **Storage**: Google Drive integration for Nebo sensor data
 - **Scheduler**: Background job scheduler for automatic Nebo data collection every 2 minutes
 
@@ -40,6 +42,7 @@ A modern web application for downloading environmental sensor data from Aurassur
 - npm or yarn
 - Aurassure API credentials (Access ID and Access Key)
 - **(Optional)** Google Drive service account credentials for Nebo integration
+- **(Optional)** Crafted Climate API credentials for Crafted Climate integration
 
 ## Local Development
 
@@ -52,6 +55,10 @@ Create a `.env` file in the root directory with your Aurassure credentials:
 ```env
 AccessId=your_access_id_here
 AccessKey=your_access_key_here
+
+# Optional: Crafted Climate API credentials
+CRAFTED_CLIMATE_API_KEY=your_crafted_climate_api_key_here
+CRAFTED_CLIMATE_AUID=your_crafted_climate_auid_here
 ```
 
 ### 2. Backend Setup
@@ -107,7 +114,7 @@ These scripts will:
 ## Usage
 
 1. Open your browser and navigate to `http://localhost:3000`
-2. Select the data source (Aurassure or Nebo)
+2. Select the data source (Aurassure, Nebo, or Crafted Climate)
 3. Select sensors (or choose "Select All Sensors")
 4. Choose a date/time range (defaults to last 2 days)
 5. Select your preferred download format (CSV or JSON)
@@ -118,7 +125,7 @@ These scripts will:
 
 ### Aurassure Endpoints
 
-- `GET /api/health` - Health check endpoint (includes Nebo availability status)
+- `GET /api/health` - Health check endpoint (includes Nebo and Crafted Climate availability status)
 - `GET /api/sensors` - Get list of available Aurassure sensors
 - `POST /api/download` - Download Aurassure data
   - Body: `{ sensors, start_time, end_time, format }`
@@ -134,16 +141,27 @@ These scripts will:
 - `POST /api/nebo/preview` - Preview Nebo data (first 10 rows)
   - Body: `{ sensors, start_time, end_time }`
 
+### Crafted Climate Endpoints
+
+- `GET /api/crafted-climate/sensors` - Get list of available Crafted Climate sensors
+- `POST /api/crafted-climate/download` - Download Crafted Climate data
+  - Body: `{ sensors, start_time, end_time, format }`
+  - Note: Fetches data directly from Crafted Climate API on-demand
+- `POST /api/crafted-climate/preview` - Preview Crafted Climate data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
+
 ## Project Structure
 
 ```
 Aurassure-site/
 ├── backend/
-│   ├── app.py                  # Flask application with API endpoints and scheduler
-│   ├── aurasure.py             # Aurassure data fetching logic
-│   ├── nebo_data_manager.py    # Nebo data retrieval functions
-│   ├── nebo_script.py          # Nebo data collection script (used by scheduler)
-│   └── requirements.txt        # Python dependencies
+│   ├── app.py                     # Flask application with API endpoints and scheduler
+│   ├── aurasure.py                # Aurassure data fetching logic
+│   ├── nebo_data_manager.py       # Nebo data retrieval functions
+│   ├── nebo_script.py             # Nebo data collection script (used by scheduler)
+│   ├── crafted_climate.py         # Crafted Climate API integration
+│   ├── crafted_climate_manager.py # Crafted Climate data retrieval functions
+│   └── requirements.txt           # Python dependencies
 ├── frontend/
 │   ├── public/
 │   ├── src/
@@ -184,6 +202,19 @@ This creates an optimized production build in `frontend/build/`.
 - `REACT_APP_API_URL` - Backend API URL (default: http://localhost:5000)
 - `PORT` - Server port (default: 5000 for local, 8080 for GCP, 10000 for Render)
 - `CORS_ORIGINS` - Allowed CORS origins (default: *, set to specific URLs in production)
+
+### Crafted Climate Integration (Optional)
+
+To enable Crafted Climate sensor data:
+
+1. Add the following environment variables to your `.env` file:
+   - `CRAFTED_CLIMATE_API_KEY` - Your Crafted Climate API key
+   - `CRAFTED_CLIMATE_AUID` - Your Crafted Climate sensor AUID (e.g., AU-001-CC1N-01)
+2. The Crafted Climate integration will automatically activate when both credentials are set
+3. The Crafted Climate data source option will appear in the frontend UI when available
+4. Data is fetched on-demand when you preview or download
+
+**Note**: If credentials are not configured, the application will run normally with only Aurassure and Nebo data available.
 
 ### Nebo Integration (Optional)
 
