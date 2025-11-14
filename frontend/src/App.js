@@ -52,10 +52,11 @@ function App() {
       }
       
       const response = await axios.get(endpoint);
-      setSensors(response.data.sensors);
+      setSensors(response.data.sensors || []);
     } catch (err) {
       console.error('Error fetching sensors:', err);
       setError('Failed to fetch sensors');
+      setSensors([]);
     }
   }, [dataSource]);
 
@@ -351,11 +352,11 @@ function App() {
           </div>
         </div>
 
-        {preview && (
+        {preview && preview.columns && preview.preview && (
           <div className="preview-container">
             <h2>Data Preview</h2>
             <p className="preview-info">
-              Showing first 10 rows of {preview.total_rows} total rows
+              Showing first 10 rows of {preview.total_rows || 0} total rows
             </p>
             <div className="table-container">
               <table className="preview-table">
