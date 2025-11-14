@@ -58,7 +58,9 @@ AccessKey=your_access_key_here
 
 # Optional: Crafted Climate API credentials
 CRAFTED_CLIMATE_API_KEY=your_crafted_climate_api_key_here
-CRAFTED_CLIMATE_AUID=your_crafted_climate_auid_here
+# Note: AUIDs are configured in backend/crafted_climate_auids.json
+# For backward compatibility, single AUID can still be set via:
+# CRAFTED_CLIMATE_AUID=your_crafted_climate_auid_here
 ```
 
 ### 2. Backend Setup
@@ -207,14 +209,36 @@ This creates an optimized production build in `frontend/build/`.
 
 To enable Crafted Climate sensor data:
 
-1. Add the following environment variables to your `.env` file:
+1. Add your Crafted Climate API key to your `.env` file:
    - `CRAFTED_CLIMATE_API_KEY` - Your Crafted Climate API key
-   - `CRAFTED_CLIMATE_AUID` - Your Crafted Climate sensor AUID (e.g., AU-001-CC1N-01)
-2. The Crafted Climate integration will automatically activate when both credentials are set
-3. The Crafted Climate data source option will appear in the frontend UI when available
-4. Data is fetched on-demand when you preview or download
 
-**Note**: If credentials are not configured, the application will run normally with only Aurassure and Nebo data available.
+2. Configure your Crafted Climate sensor AUIDs in `backend/crafted_climate_auids.json`:
+   ```json
+   {
+     "auids": [
+       {
+         "id": "AU-001-CC1N-01",
+         "name": "Crafted Climate Sensor 1",
+         "description": "Description of sensor 1"
+       },
+       {
+         "id": "AU-001-CC1N-02",
+         "name": "Crafted Climate Sensor 2",
+         "description": "Description of sensor 2"
+       }
+     ]
+   }
+   ```
+   Use `backend/crafted_climate_auids.json.example` as a template.
+
+3. The Crafted Climate integration will automatically activate when the API key and AUIDs are configured
+4. The Crafted Climate data source option will appear in the frontend UI when available
+5. Data is fetched on-demand when you preview or download
+
+**Note**: 
+- The AUID configuration file will be provided during production deployment
+- For backward compatibility, you can still use the `CRAFTED_CLIMATE_AUID` environment variable for a single sensor
+- If credentials are not configured, the application will run normally with only Aurassure and Nebo data available
 
 ### Nebo Integration (Optional)
 

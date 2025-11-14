@@ -1,0 +1,14 @@
+{
+  "auids": [
+    {
+      "id": "AU-001-CC1N-01",
+      "name": "Crafted Climate Sensor 1",
+      "description": "Example sensor 1"
+    },
+    {
+      "id": "AU-001-CC1N-02",
+      "name": "Crafted Climate Sensor 2",
+      "description": "Example sensor 2"
+    }
+  ]
+}
