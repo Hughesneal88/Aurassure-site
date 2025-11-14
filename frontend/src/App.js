@@ -17,6 +17,7 @@ function App() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [neboEnabled, setNeboEnabled] = useState(false);
+  const [craftedClimateEnabled, setCraftedClimateEnabled] = useState(false);
 
   const formatDateTimeLocal = (date) => {
     const year = date.getFullYear();
@@ -31,17 +32,24 @@ function App() {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/health`);
       setNeboEnabled(response.data.nebo_enabled || false);
+      setCraftedClimateEnabled(response.data.crafted_climate_enabled || false);
     } catch (err) {
-      console.error('Error checking Nebo status:', err);
+      console.error('Error checking service status:', err);
       setNeboEnabled(false);
+      setCraftedClimateEnabled(false);
     }
   }, []);
 
   const fetchSensors = useCallback(async () => {
     try {
-      const endpoint = dataSource === 'nebo' 
-        ? `${API_BASE_URL}/api/nebo/sensors`
-        : `${API_BASE_URL}/api/sensors`;
+      let endpoint;
+      if (dataSource === 'nebo') {
+        endpoint = `${API_BASE_URL}/api/nebo/sensors`;
+      } else if (dataSource === 'crafted-climate') {
+        endpoint = `${API_BASE_URL}/api/crafted-climate/sensors`;
+      } else {
+        endpoint = `${API_BASE_URL}/api/sensors`;
+      }
       
       const response = await axios.get(endpoint);
       setSensors(response.data.sensors);
@@ -115,9 +123,14 @@ function App() {
     setSuccess(null);
     
     try {
-      const endpoint = dataSource === 'nebo' 
-        ? `${API_BASE_URL}/api/nebo/preview`
-        : `${API_BASE_URL}/api/preview`;
+      let endpoint;
+      if (dataSource === 'nebo') {
+        endpoint = `${API_BASE_URL}/api/nebo/preview`;
+      } else if (dataSource === 'crafted-climate') {
+        endpoint = `${API_BASE_URL}/api/crafted-climate/preview`;
+      } else {
+        endpoint = `${API_BASE_URL}/api/preview`;
+      }
       
       const payload = {
         sensors: selectAll ? 'all' : selectedSensors,
@@ -144,9 +157,19 @@ function App() {
     setSuccess(null);
     
     try {
-      const endpoint = dataSource === 'nebo' 
-        ? `${API_BASE_URL}/api/nebo/download`
-        : `${API_BASE_URL}/api/download`;
+      let endpoint;
+      let filename;
+      
+      if (dataSource === 'nebo') {
+        endpoint = `${API_BASE_URL}/api/nebo/download`;
+        filename = `nebo_data.${format}`;
+      } else if (dataSource === 'crafted-climate') {
+        endpoint = `${API_BASE_URL}/api/crafted-climate/download`;
+        filename = `crafted_climate_data.${format}`;
+      } else {
+        endpoint = `${API_BASE_URL}/api/download`;
+        filename = `aurassure_data.${format}`;
+      }
       
       const payload = {
         sensors: selectAll ? 'all' : selectedSensors,
@@ -163,9 +186,6 @@ function App() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      const filename = dataSource === 'nebo' 
-        ? `nebo_data.${format}`
-        : `aurassure_data.${format}`;
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
@@ -186,7 +206,7 @@ function App() {
       <div className="container">
         <header className="header">
           <h1>Aurassure Data Download</h1>
-          <p className="subtitle">Download environmental sensor data from Aurassure or Nebo</p>
+          <p className="subtitle">Download environmental sensor data from Aurassure, Nebo, or Crafted Climate</p>
         </header>
 
         <div className="form-container">
@@ -215,6 +235,18 @@ function App() {
                 />
                 <span className="radio-button">
                   Nebo {!neboEnabled && '(Not Available)'}
+                </span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="crafted-climate"
+                  checked={dataSource === 'crafted-climate'}
+                  onChange={(e) => setDataSource(e.target.value)}
+                  disabled={!craftedClimateEnabled}
+                />
+                <span className="radio-button">
+                  Crafted Climate {!craftedClimateEnabled && '(Not Available)'}
                 </span>
               </label>
             </div>
