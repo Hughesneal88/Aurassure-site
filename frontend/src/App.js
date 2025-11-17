@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './App.css';
-import Login from './Login';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   const [dataSource, setDataSource] = useState('aurassure');
   const [sensors, setSensors] = useState([]);
   const [selectedSensors, setSelectedSensors] = useState([]);
@@ -31,40 +28,9 @@ function App() {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  const checkAuthentication = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/check-auth`, {
-        withCredentials: true
-      });
-      setIsAuthenticated(response.data.authenticated);
-    } catch (err) {
-      console.error('Error checking authentication:', err);
-      setIsAuthenticated(false);
-    } finally {
-      setAuthChecked(true);
-    }
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await axios.post(`${API_BASE_URL}/api/logout`, {}, {
-        withCredentials: true
-      });
-      setIsAuthenticated(false);
-    } catch (err) {
-      console.error('Error logging out:', err);
-    }
-  };
-
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
-
   const checkNeboStatus = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/health`, {
-        withCredentials: true
-      });
+      const response = await axios.get(`${API_BASE_URL}/api/health`);
       setNeboEnabled(response.data.nebo_enabled || false);
       setCraftedClimateEnabled(response.data.crafted_climate_enabled || false);
     } catch (err) {
@@ -85,9 +51,7 @@ function App() {
         endpoint = `${API_BASE_URL}/api/sensors`;
       }
       
-      const response = await axios.get(endpoint, {
-        withCredentials: true
-      });
+      const response = await axios.get(endpoint);
       setSensors(response.data.sensors || []);
     } catch (err) {
       console.error('Error fetching sensors:', err);
@@ -97,14 +61,6 @@ function App() {
   }, [dataSource]);
 
   useEffect(() => {
-    // Check authentication first
-    checkAuthentication();
-  }, [checkAuthentication]);
-
-  useEffect(() => {
-    // Only proceed if authenticated
-    if (!isAuthenticated) return;
-    
     // Check if Nebo is enabled
     checkNeboStatus();
     
@@ -118,7 +74,7 @@ function App() {
     
     setEndTime(formatDateTimeLocal(end));
     setStartTime(formatDateTimeLocal(start));
-  }, [isAuthenticated, checkNeboStatus, fetchSensors]);
+  }, [checkNeboStatus, fetchSensors]);
 
   // Re-fetch sensors when data source changes
   useEffect(() => {
@@ -184,9 +140,7 @@ function App() {
         format: format
       };
 
-      const response = await axios.post(endpoint, payload, {
-        withCredentials: true
-      });
+      const response = await axios.post(endpoint, payload);
       setPreview(response.data);
       setSuccess('Preview loaded successfully!');
     } catch (err) {
@@ -226,8 +180,7 @@ function App() {
       };
 
       const response = await axios.post(endpoint, payload, {
-        responseType: 'blob',
-        withCredentials: true
+        responseType: 'blob'
       });
 
       // Create download link
@@ -249,35 +202,12 @@ function App() {
     }
   };
 
-  // Show loading state while checking authentication
-  if (!authChecked) {
-    return (
-      <div className="App">
-        <div className="loading-container">
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
     <div className="App">
       <div className="container">
         <header className="header">
-          <div className="header-content">
-            <div>
-              <h1>Aurassure Data Download</h1>
-              <p className="subtitle">Download environmental sensor data from Aurassure, Nebo, or Crafted Climate</p>
-            </div>
-            <button onClick={handleLogout} className="btn btn-logout">
-              Logout
-            </button>
-          </div>
+          <h1>Aurassure Data Download</h1>
+          <p className="subtitle">Download environmental sensor data from Aurassure, Nebo, or Crafted Climate</p>
         </header>
 
         <div className="form-container">
