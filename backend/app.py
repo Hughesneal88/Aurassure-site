@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, session
 from flask_cors import CORS
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime
 import os
 import io
@@ -7,19 +8,32 @@ import re
 from aurasure import get_data
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
-# Enable CORS for all routes
+# Set secret key for session management
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.session_protection = "strong"
+
+# Enable CORS for all routes with credentials support
 # In production, you should configure allowed origins for security
 # For GitHub Pages + Render, set CORS_ORIGINS environment variable
 cors_origins = os.environ.get('CORS_ORIGINS', '*')
 if cors_origins == '*':
-    CORS(app)
+    CORS(app, supports_credentials=True)
 else:
     # Parse comma-separated origins
     origins = [origin.strip() for origin in cors_origins.split(',')]
-    CORS(app, origins=origins)
+    CORS(app, origins=origins, supports_credentials=True)
 
 # Initialize background scheduler for Nebo data collection
 scheduler = BackgroundScheduler()
@@ -61,6 +75,19 @@ except Exception as e:
     print(f"Warning: Crafted Climate integration not available: {e}")
     CRAFTED_CLIMATE_ENABLED = False
 
+# Simple User class for Flask-Login
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+
+@login_manager.user_loader
+def load_user(user_id):
+    # In a real application, you would load the user from a database
+    # For this simple implementation, we just check if the ID matches
+    if user_id == "admin_user":
+        return User(user_id)
+    return None
+
 def sanitize_filename(filename):
     """Sanitize filename to prevent path injection"""
     # Remove any directory path components
@@ -79,10 +106,53 @@ def health_check():
         "status": "ok",
         "message": "Aurassure API is running",
         "nebo_enabled": NEBO_ENABLED,
-        "crafted_climate_enabled": CRAFTED_CLIMATE_ENABLED
+        "crafted_climate_enabled": CRAFTED_CLIMATE_ENABLED,
+        "authenticated": current_user.is_authenticated
+    })
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """Login endpoint"""
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    
+    # Get credentials from environment variables
+    valid_username = os.environ.get('LOGIN_USERNAME', 'admin')
+    valid_password = os.environ.get('LOGIN_PASSWORD', 'changeme')
+    
+    if username == valid_username and password == valid_password:
+        user = User("admin_user")
+        login_user(user, remember=True)
+        return jsonify({
+            "success": True,
+            "message": "Login successful"
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "message": "Invalid username or password"
+        }), 401
+
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def logout():
+    """Logout endpoint"""
+    logout_user()
+    return jsonify({
+        "success": True,
+        "message": "Logout successful"
+    })
+
+@app.route('/api/check-auth', methods=['GET'])
+def check_auth():
+    """Check authentication status"""
+    return jsonify({
+        "authenticated": current_user.is_authenticated
     })
 
 @app.route('/api/sensors', methods=['GET'])
+@login_required
 def get_sensors():
     """Get available sensors"""
     return jsonify({
@@ -94,6 +164,7 @@ def get_sensors():
     })
 
 @app.route('/api/download', methods=['POST'])
+@login_required
 def download_data():
     """
     Download data endpoint
@@ -166,6 +237,7 @@ def download_data():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/preview', methods=['POST'])
+@login_required
 def preview_data():
     """
     Preview data endpoint - returns first 10 rows as JSON
@@ -218,6 +290,7 @@ def preview_data():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/nebo/sensors', methods=['GET'])
+@login_required
 def get_nebo_sensors_endpoint():
     """Get available Nebo sensors"""
     if not NEBO_ENABLED:
@@ -231,6 +304,7 @@ def get_nebo_sensors_endpoint():
         return jsonify({"error": "Failed to retrieve Nebo sensors"}), 500
 
 @app.route('/api/nebo/download', methods=['POST'])
+@login_required
 def download_nebo_data():
     """
     Download Nebo data from Google Drive
@@ -312,6 +386,7 @@ def download_nebo_data():
         return jsonify({"error": "Failed to download Nebo data"}), 500
 
 @app.route('/api/nebo/preview', methods=['POST'])
+@login_required
 def preview_nebo_data():
     """
     Preview Nebo data from Google Drive - returns first 10 rows as JSON
@@ -366,6 +441,7 @@ def preview_nebo_data():
         return jsonify({"error": "Failed to preview Nebo data"}), 500
 
 @app.route('/api/crafted-climate/sensors', methods=['GET'])
+@login_required
 def get_crafted_climate_sensors_endpoint():
     """Get available Crafted Climate sensors"""
     if not CRAFTED_CLIMATE_ENABLED:
@@ -379,6 +455,7 @@ def get_crafted_climate_sensors_endpoint():
         return jsonify({"error": "Failed to retrieve Crafted Climate sensors"}), 500
 
 @app.route('/api/crafted-climate/download', methods=['POST'])
+@login_required
 def download_crafted_climate_data_endpoint():
     """
     Download Crafted Climate data
@@ -460,6 +537,7 @@ def download_crafted_climate_data_endpoint():
         return jsonify({"error": "Failed to download Crafted Climate data"}), 500
 
 @app.route('/api/crafted-climate/preview', methods=['POST'])
+@login_required
 def preview_crafted_climate_data():
     """
     Preview Crafted Climate data - returns first 10 rows as JSON
