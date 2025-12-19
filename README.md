@@ -187,8 +187,6 @@ These scripts will:
   - Note: Fetches PM2.5 data from Envira IoT devices
 - `POST /api/envira/preview` - Preview Envira data (first 10 rows)
   - Body: `{ sensors, start_time, end_time }`
-- `POST /api/crafted-climate/preview` - Preview Crafted Climate data (first 10 rows)
-  - Body: `{ sensors, start_time, end_time }`
 
 ## Project Structure
 

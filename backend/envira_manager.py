@@ -10,13 +10,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Envira device UUIDs - these should be configured in environment or a config file
-# Default devices from the example code
-ENVIRA_DEVICES = {
-    "device_1": os.environ.get('ENVIRA_DEVICE_1_UUID', 'fba1d9dd-5031-334d-4e2e-3120ff0f3429')
-}
+# Default to no devices - user must configure in .env
+ENVIRA_DEVICES = {}
+
+# Load device from environment variable (example UUID in .env.example)
+device_1_uuid = os.environ.get('ENVIRA_DEVICE_1_UUID')
+if device_1_uuid:
+    ENVIRA_DEVICES["device_1"] = device_1_uuid
 
 # Load additional devices from environment variables
-for i in range(2, 10):  # Support up to 10 devices
+for i in range(2, 11):  # Support up to 10 devices
     device_uuid = os.environ.get(f'ENVIRA_DEVICE_{i}_UUID')
     if device_uuid:
         ENVIRA_DEVICES[f"device_{i}"] = device_uuid
