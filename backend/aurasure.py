@@ -61,7 +61,7 @@ def get_data(sensors=all, start_time=None, end_time=None, save_to=None, save_nam
     params = {
     "data_type": "raw",
     "aggregation_period": 0,
-    "parameters": ["temp", "humid", "pm1", "pm2.5", "no2", "o3", "co"],
+    "parameters": ["temp", "humid", "pm1", "pm2.5", "pm10", "no2", "o3", "co"],
     "parameter_attributes": [],
     "things": sensors,
     "from_time": int(start_time),
