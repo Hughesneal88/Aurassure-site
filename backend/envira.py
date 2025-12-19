@@ -133,11 +133,12 @@ def display_device_data(device_uuid, start_timestamp=None, end_timestamp=None):
     print(json.dumps(data, indent=2))
 
 
-end_timestamp = datetime.now()
-start_timestamp = end_timestamp - timedelta(days=1)
+if __name__ == "__main__":
+    end_timestamp = datetime.now()
+    start_timestamp = end_timestamp - timedelta(days=1)
 
-display_device_data(
-    "fba1d9dd-5031-334d-4e2e-3120ff0f3429",
-    start_timestamp=start_timestamp.isoformat(),
-    end_timestamp=end_timestamp.isoformat()
-)
+    display_device_data(
+        "fba1d9dd-5031-334d-4e2e-3120ff0f3429",
+        start_timestamp=start_timestamp.isoformat(),
+        end_timestamp=end_timestamp.isoformat()
+    )
