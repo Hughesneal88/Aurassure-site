@@ -1,6 +1,6 @@
 # Aurassure Data Download Site
 
-A modern web application for downloading environmental sensor data from Aurassure, featuring a Flask backend and React frontend.
+A modern web application for downloading environmental sensor data from multiple air quality monitoring platforms, featuring a Flask backend and React frontend.
 
 ## 🚀 Quick Start
 
@@ -19,10 +19,13 @@ A modern web application for downloading environmental sensor data from Aurassur
 - 🔧 Sensor selection (individual or all sensors)
 - 💾 Multiple download formats (CSV, JSON)
 - 🚀 Fast and responsive
-- 🔄 **NEW**: Nebo sensor data integration with automatic 2-minute collection cycle
-- ☁️ **NEW**: Google Drive storage for Nebo sensor data
-- 📈 **NEW**: Download Nebo data within custom time ranges
-- 🌡️ **NEW**: Crafted Climate sensor data integration
+- 🔄 Nebo sensor data integration with automatic 2-minute collection cycle
+- ☁️ Google Drive storage for Nebo sensor data
+- 📈 Download data within custom time ranges
+- 🌡️ Crafted Climate sensor data integration
+- 🌍 **NEW**: AirVisual/IQAir sensor data integration
+- 📡 **NEW**: AirGradient sensor data integration
+- 🌐 **NEW**: Envira IoT sensor data integration
 
 ## Architecture
 
@@ -32,6 +35,9 @@ A modern web application for downloading environmental sensor data from Aurassur
   - Aurassure IoT Platform API (real-time API access)
   - Nebo Sensors API (periodic collection, Google Drive storage)
   - Crafted Climate API (on-demand data retrieval)
+  - AirVisual/IQAir API (historical data access)
+  - AirGradient API (parallel multi-sensor data retrieval)
+  - Envira IoT API (device-specific data access)
 - **Storage**: Google Drive integration for Nebo sensor data
 - **Scheduler**: Background job scheduler for automatic Nebo data collection every 2 minutes
 
@@ -43,6 +49,9 @@ A modern web application for downloading environmental sensor data from Aurassur
 - Aurassure API credentials (Access ID and Access Key)
 - **(Optional)** Google Drive service account credentials for Nebo integration
 - **(Optional)** Crafted Climate API credentials for Crafted Climate integration
+- **(Optional)** AirGradient API token for AirGradient integration
+- **(Optional)** Envira device UUIDs for Envira IoT integration
+- **(Optional)** AirVisual devices are pre-configured and available by default
 
 ## Local Development
 
@@ -116,7 +125,7 @@ These scripts will:
 ## Usage
 
 1. Open your browser and navigate to `http://localhost:3000`
-2. Select the data source (Aurassure, Nebo, or Crafted Climate)
+2. Select the data source (Aurassure, Nebo, Crafted Climate, AirVisual, AirGradient, or Envira)
 3. Select sensors (or choose "Select All Sensors")
 4. Choose a date/time range (defaults to last 2 days)
 5. Select your preferred download format (CSV or JSON)
@@ -127,7 +136,7 @@ These scripts will:
 
 ### Aurassure Endpoints
 
-- `GET /api/health` - Health check endpoint (includes Nebo and Crafted Climate availability status)
+- `GET /api/health` - Health check endpoint (includes availability status for all integrations)
 - `GET /api/sensors` - Get list of available Aurassure sensors
 - `POST /api/download` - Download Aurassure data
   - Body: `{ sensors, start_time, end_time, format }`
@@ -149,6 +158,35 @@ These scripts will:
 - `POST /api/crafted-climate/download` - Download Crafted Climate data
   - Body: `{ sensors, start_time, end_time, format }`
   - Note: Fetches data directly from Crafted Climate API on-demand
+- `POST /api/crafted-climate/preview` - Preview Crafted Climate data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
+
+### AirVisual Endpoints
+
+- `GET /api/airvisual/sensors` - Get list of available AirVisual sensors
+- `POST /api/airvisual/download` - Download AirVisual data
+  - Body: `{ sensors, start_time, end_time, format }`
+  - Note: Fetches historical data from IQAir devices
+- `POST /api/airvisual/preview` - Preview AirVisual data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
+
+### AirGradient Endpoints
+
+- `GET /api/airgradient/sensors` - Get list of available AirGradient sensors
+- `POST /api/airgradient/download` - Download AirGradient data
+  - Body: `{ sensors, start_time, end_time, format }`
+  - Note: Fetches data using parallel requests for optimal performance
+- `POST /api/airgradient/preview` - Preview AirGradient data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
+
+### Envira Endpoints
+
+- `GET /api/envira/sensors` - Get list of available Envira sensors
+- `POST /api/envira/download` - Download Envira data
+  - Body: `{ sensors, start_time, end_time, format }`
+  - Note: Fetches PM2.5 data from Envira IoT devices
+- `POST /api/envira/preview` - Preview Envira data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
 - `POST /api/crafted-climate/preview` - Preview Crafted Climate data (first 10 rows)
   - Body: `{ sensors, start_time, end_time }`
 
@@ -238,7 +276,66 @@ To enable Crafted Climate sensor data:
 **Note**: 
 - The AUID configuration file will be provided during production deployment
 - For backward compatibility, you can still use the `CRAFTED_CLIMATE_AUID` environment variable for a single sensor
-- If credentials are not configured, the application will run normally with only Aurassure and Nebo data available
+- If credentials are not configured, the application will run normally with other data sources available
+
+### AirGradient Integration (Optional)
+
+To enable AirGradient sensor data:
+
+1. Add your AirGradient API token to your `.env` file:
+   ```env
+   AIRGRADIENT_API_TOKEN=your_airgradient_api_token_here
+   ```
+   Alternatively, you can use:
+   ```env
+   AIRGRADIENT_API_KEY=your_airgradient_api_key_here
+   ```
+
+2. The AirGradient integration will automatically activate when the API token is configured
+3. The AirGradient data source option will appear in the frontend UI when available
+4. Data is fetched on-demand when you preview or download
+5. The integration supports parallel requests for optimal performance when fetching data from multiple sensors
+
+**Note**: 
+- Get your API token from the AirGradient dashboard
+- The AirGradient API has a maximum interval of 48 hours per request
+- The integration automatically handles splitting longer date ranges into multiple requests
+- Sensor locations are pre-configured in `backend/airgradient.py`
+
+### AirVisual/IQAir Integration
+
+The AirVisual integration is **enabled by default** and does not require any API credentials:
+
+1. The integration provides access to three pre-configured IQAir devices (NUXK, 5UEO, 215J)
+2. Data is fetched directly from device URLs
+3. The AirVisual data source option will be available in the frontend UI
+4. Historical data is retrieved from the devices' instant measurements
+
+**Note**: 
+- No API key or credentials required
+- Devices are pre-configured in `backend/airvisual.py`
+- Data includes PM2.5 AQI, PM2.5 concentration, temperature, and humidity
+
+### Envira IoT Integration (Optional)
+
+To enable Envira IoT sensor data:
+
+1. Add your Envira device UUIDs to your `.env` file:
+   ```env
+   ENVIRA_DEVICE_1_UUID=fba1d9dd-5031-334d-4e2e-3120ff0f3429
+   ENVIRA_DEVICE_2_UUID=your_second_device_uuid_here
+   ENVIRA_DEVICE_3_UUID=your_third_device_uuid_here
+   ```
+   You can add up to 10 devices (ENVIRA_DEVICE_1_UUID through ENVIRA_DEVICE_10_UUID)
+
+2. The Envira integration will automatically activate when at least one device UUID is configured
+3. The Envira data source option will appear in the frontend UI when available
+4. Data is fetched on-demand when you preview or download
+
+**Note**: 
+- Get device UUIDs from your Envira IoT dashboard or device URLs
+- The integration fetches PM2.5 data from each configured device
+- Data includes timestamps and PM2.5 measurements
 
 ### Nebo Integration (Optional)
 
@@ -258,7 +355,7 @@ To enable Nebo sensor data collection and storage:
 - If you encounter a "Service Accounts do not have storage quota" error, verify that your folder is in a Shared Drive, not a regular folder. See [Google's Shared Drives documentation](https://developers.google.com/workspace/drive/api/guides/about-shareddrives) for more information.
 - The `nebo_script.py` can also be run standalone for testing or manual data collection.
 
-**Note**: If the service account file is not present, the application will run normally with only Aurassure data available.
+**Note**: If the service account file is not present, the application will run normally with other data sources available.
 
 ## Deployment Options
 
