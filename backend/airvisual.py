@@ -102,4 +102,5 @@ def get_all_historical_data(device_id="NUXK"):
         return None
 
 
-print(get_all_historical_data())
+if __name__ == "__main__":
+    print(get_all_historical_data())

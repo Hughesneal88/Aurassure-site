@@ -18,6 +18,9 @@ function App() {
   const [success, setSuccess] = useState(null);
   const [neboEnabled, setNeboEnabled] = useState(false);
   const [craftedClimateEnabled, setCraftedClimateEnabled] = useState(false);
+  const [airvisualEnabled, setAirvisualEnabled] = useState(false);
+  const [airgradientEnabled, setAirgradientEnabled] = useState(false);
+  const [enviraEnabled, setEnviraEnabled] = useState(false);
 
   const formatDateTimeLocal = (date) => {
     const year = date.getFullYear();
@@ -33,10 +36,16 @@ function App() {
       const response = await axios.get(`${API_BASE_URL}/api/health`);
       setNeboEnabled(response.data.nebo_enabled || false);
       setCraftedClimateEnabled(response.data.crafted_climate_enabled || false);
+      setAirvisualEnabled(response.data.airvisual_enabled || false);
+      setAirgradientEnabled(response.data.airgradient_enabled || false);
+      setEnviraEnabled(response.data.envira_enabled || false);
     } catch (err) {
       console.error('Error checking service status:', err);
       setNeboEnabled(false);
       setCraftedClimateEnabled(false);
+      setAirvisualEnabled(false);
+      setAirgradientEnabled(false);
+      setEnviraEnabled(false);
     }
   }, []);
 
@@ -47,6 +56,12 @@ function App() {
         endpoint = `${API_BASE_URL}/api/nebo/sensors`;
       } else if (dataSource === 'crafted-climate') {
         endpoint = `${API_BASE_URL}/api/crafted-climate/sensors`;
+      } else if (dataSource === 'airvisual') {
+        endpoint = `${API_BASE_URL}/api/airvisual/sensors`;
+      } else if (dataSource === 'airgradient') {
+        endpoint = `${API_BASE_URL}/api/airgradient/sensors`;
+      } else if (dataSource === 'envira') {
+        endpoint = `${API_BASE_URL}/api/envira/sensors`;
       } else {
         endpoint = `${API_BASE_URL}/api/sensors`;
       }
@@ -129,6 +144,12 @@ function App() {
         endpoint = `${API_BASE_URL}/api/nebo/preview`;
       } else if (dataSource === 'crafted-climate') {
         endpoint = `${API_BASE_URL}/api/crafted-climate/preview`;
+      } else if (dataSource === 'airvisual') {
+        endpoint = `${API_BASE_URL}/api/airvisual/preview`;
+      } else if (dataSource === 'airgradient') {
+        endpoint = `${API_BASE_URL}/api/airgradient/preview`;
+      } else if (dataSource === 'envira') {
+        endpoint = `${API_BASE_URL}/api/envira/preview`;
       } else {
         endpoint = `${API_BASE_URL}/api/preview`;
       }
@@ -167,6 +188,15 @@ function App() {
       } else if (dataSource === 'crafted-climate') {
         endpoint = `${API_BASE_URL}/api/crafted-climate/download`;
         filename = `crafted_climate_data.${format}`;
+      } else if (dataSource === 'airvisual') {
+        endpoint = `${API_BASE_URL}/api/airvisual/download`;
+        filename = `airvisual_data.${format}`;
+      } else if (dataSource === 'airgradient') {
+        endpoint = `${API_BASE_URL}/api/airgradient/download`;
+        filename = `airgradient_data.${format}`;
+      } else if (dataSource === 'envira') {
+        endpoint = `${API_BASE_URL}/api/envira/download`;
+        filename = `envira_data.${format}`;
       } else {
         endpoint = `${API_BASE_URL}/api/download`;
         filename = `aurassure_data.${format}`;
@@ -207,7 +237,7 @@ function App() {
       <div className="container">
         <header className="header">
           <h1>Aurassure Data Download</h1>
-          <p className="subtitle">Download environmental sensor data from Aurassure, Nebo, or Crafted Climate</p>
+          <p className="subtitle">Download environmental sensor data from multiple sources</p>
         </header>
 
         <div className="form-container">
@@ -250,6 +280,42 @@ function App() {
                   Crafted Climate {!craftedClimateEnabled && '(Not Available)'}
                 </span>
               </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="airvisual"
+                  checked={dataSource === 'airvisual'}
+                  onChange={(e) => setDataSource(e.target.value)}
+                  disabled={!airvisualEnabled}
+                />
+                <span className="radio-button">
+                  AirVisual {!airvisualEnabled && '(Not Available)'}
+                </span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="airgradient"
+                  checked={dataSource === 'airgradient'}
+                  onChange={(e) => setDataSource(e.target.value)}
+                  disabled={!airgradientEnabled}
+                />
+                <span className="radio-button">
+                  AirGradient {!airgradientEnabled && '(Not Available)'}
+                </span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="envira"
+                  checked={dataSource === 'envira'}
+                  onChange={(e) => setDataSource(e.target.value)}
+                  disabled={!enviraEnabled}
+                />
+                <span className="radio-button">
+                  Envira {!enviraEnabled && '(Not Available)'}
+                </span>
+              </label>
             </div>
           </div>
 
@@ -267,20 +333,21 @@ function App() {
               
               {!selectAll && (
                 <div className="sensor-grid">
-                  {sensors.map(sensor => (
-                    <label key={sensor.id || sensor.slug} className="checkbox-label sensor-item">
-                      <input
-                        type="checkbox"
-                        checked={selectedSensors.includes(sensor.id || sensor.slug)}
-                        onChange={() => handleSensorToggle(sensor.id || sensor.slug)}
-                      />
-                      <span>
-                        {sensor.name}
-                        {sensor.id && ` (ID: ${sensor.id})`}
-                        {sensor.slug && dataSource === 'nebo' && ` (${sensor.slug.substring(0, 8)}...)`}
-                      </span>
-                    </label>
-                  ))}
+                  {sensors.map(sensor => {
+                    const sensorKey = sensor.id || sensor.slug || sensor.uuid;
+                    return (
+                      <label key={sensorKey} className="checkbox-label sensor-item">
+                        <input
+                          type="checkbox"
+                          checked={selectedSensors.includes(sensorKey)}
+                          onChange={() => handleSensorToggle(sensorKey)}
+                        />
+                        <span>
+                          {sensor.name}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
