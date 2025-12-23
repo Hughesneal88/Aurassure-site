@@ -94,8 +94,8 @@ def split_date_range(start_iso: str, end_iso: str) -> List[tuple]:
     Returns:
         List of tuples containing (from_iso, to_iso) for each interval
     """
-    start = iso_to_datetime(start_iso[:-6])
-    end = iso_to_datetime(end_iso[:-6])
+    start = iso_to_datetime(start_iso[:-8])
+    end = iso_to_datetime(end_iso[:-8])
     
     intervals = []
     current = start
