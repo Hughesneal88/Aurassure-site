@@ -26,6 +26,7 @@ A modern web application for downloading environmental sensor data from multiple
 - 🌍 **NEW**: AirVisual/IQAir sensor data integration
 - 📡 **NEW**: AirGradient sensor data integration
 - 🌐 **NEW**: Envira IoT sensor data integration
+- 🌡️ **NEW**: Ecomeasure sensor data integration
 
 ## Architecture
 
@@ -38,6 +39,7 @@ A modern web application for downloading environmental sensor data from multiple
   - AirVisual/IQAir API (historical data access)
   - AirGradient API (parallel multi-sensor data retrieval)
   - Envira IoT API (device-specific data access)
+  - Ecomeasure API (multi-sensor environmental monitoring)
 - **Storage**: Google Drive integration for Nebo sensor data
 - **Scheduler**: Background job scheduler for automatic Nebo data collection every 2 minutes
 
@@ -51,6 +53,7 @@ A modern web application for downloading environmental sensor data from multiple
 - **(Optional)** Crafted Climate API credentials for Crafted Climate integration
 - **(Optional)** AirGradient API token for AirGradient integration
 - **(Optional)** Envira device UUIDs for Envira IoT integration
+- **(Optional)** Ecomeasure API token for Ecomeasure integration
 - **(Optional)** AirVisual devices are pre-configured and available by default
 
 ## Local Development
@@ -125,7 +128,7 @@ These scripts will:
 ## Usage
 
 1. Open your browser and navigate to `http://localhost:3000`
-2. Select the data source (Aurassure, Nebo, Crafted Climate, AirVisual, AirGradient, or Envira)
+2. Select the data source (Aurassure, Nebo, Crafted Climate, AirVisual, AirGradient, Envira, or Ecomeasure)
 3. Select sensors (or choose "Select All Sensors")
 4. Choose a date/time range (defaults to last 2 days)
 5. Select your preferred download format (CSV or JSON)
@@ -186,6 +189,15 @@ These scripts will:
   - Body: `{ sensors, start_time, end_time, format }`
   - Note: Fetches PM2.5 data from Envira IoT devices
 - `POST /api/envira/preview` - Preview Envira data (first 10 rows)
+  - Body: `{ sensors, start_time, end_time }`
+
+### Ecomeasure Endpoints
+
+- `GET /api/ecomeasure/sensors` - Get list of available Ecomeasure sensors
+- `POST /api/ecomeasure/download` - Download Ecomeasure data
+  - Body: `{ sensors, start_time, end_time, format }`
+  - Note: Fetches environmental data from Ecomeasure sensors
+- `POST /api/ecomeasure/preview` - Preview Ecomeasure data (first 10 rows)
   - Body: `{ sensors, start_time, end_time }`
 
 ## Project Structure
@@ -334,6 +346,25 @@ To enable Envira IoT sensor data:
 - Get device UUIDs from your Envira IoT dashboard or device URLs
 - The integration fetches PM2.5 data from each configured device
 - Data includes timestamps and PM2.5 measurements
+
+### Ecomeasure Integration (Optional)
+
+To enable Ecomeasure sensor data:
+
+1. Add your Ecomeasure API token to your `.env` file:
+   ```env
+   ECOMEASURE_TOKEN=your_ecomeasure_api_token_here
+   ```
+
+2. The Ecomeasure integration will automatically activate when the token is configured
+3. The Ecomeasure data source option will appear in the frontend UI when available
+4. Data is fetched on-demand when you preview or download
+
+**Note**: 
+- Get your API token from your Ecomeasure account
+- Default sensors (20053, 20055, 20054) are pre-configured in `backend/ecomeasure.py`
+- Data includes environmental measurements from multiple sensors
+- Time range defaults to last 24 hours if not specified
 
 ### Nebo Integration (Optional)
 

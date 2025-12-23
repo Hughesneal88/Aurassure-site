@@ -21,6 +21,7 @@ function App() {
   const [airvisualEnabled, setAirvisualEnabled] = useState(false);
   const [airgradientEnabled, setAirgradientEnabled] = useState(false);
   const [enviraEnabled, setEnviraEnabled] = useState(false);
+  const [ecomeasureEnabled, setEcomeasureEnabled] = useState(false);
 
   const formatDateTimeLocal = (date) => {
     const year = date.getFullYear();
@@ -39,6 +40,7 @@ function App() {
       setAirvisualEnabled(response.data.airvisual_enabled || false);
       setAirgradientEnabled(response.data.airgradient_enabled || false);
       setEnviraEnabled(response.data.envira_enabled || false);
+      setEcomeasureEnabled(response.data.ecomeasure_enabled || false);
     } catch (err) {
       console.error('Error checking service status:', err);
       setNeboEnabled(false);
@@ -46,6 +48,7 @@ function App() {
       setAirvisualEnabled(false);
       setAirgradientEnabled(false);
       setEnviraEnabled(false);
+      setEcomeasureEnabled(false);
     }
   }, []);
 
@@ -62,6 +65,8 @@ function App() {
         endpoint = `${API_BASE_URL}/api/airgradient/sensors`;
       } else if (dataSource === 'envira') {
         endpoint = `${API_BASE_URL}/api/envira/sensors`;
+      } else if (dataSource === 'ecomeasure') {
+        endpoint = `${API_BASE_URL}/api/ecomeasure/sensors`;
       } else {
         endpoint = `${API_BASE_URL}/api/sensors`;
       }
@@ -150,6 +155,8 @@ function App() {
         endpoint = `${API_BASE_URL}/api/airgradient/preview`;
       } else if (dataSource === 'envira') {
         endpoint = `${API_BASE_URL}/api/envira/preview`;
+      } else if (dataSource === 'ecomeasure') {
+        endpoint = `${API_BASE_URL}/api/ecomeasure/preview`;
       } else {
         endpoint = `${API_BASE_URL}/api/preview`;
       }
@@ -197,6 +204,9 @@ function App() {
       } else if (dataSource === 'envira') {
         endpoint = `${API_BASE_URL}/api/envira/download`;
         filename = `envira_data.${format}`;
+      } else if (dataSource === 'ecomeasure') {
+        endpoint = `${API_BASE_URL}/api/ecomeasure/download`;
+        filename = `ecomeasure_data.${format}`;
       } else {
         endpoint = `${API_BASE_URL}/api/download`;
         filename = `aurassure_data.${format}`;
@@ -314,6 +324,18 @@ function App() {
                 />
                 <span className="radio-button">
                   Envira {!enviraEnabled && '(Not Available)'}
+                </span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="ecomeasure"
+                  checked={dataSource === 'ecomeasure'}
+                  onChange={(e) => setDataSource(e.target.value)}
+                  disabled={!ecomeasureEnabled}
+                />
+                <span className="radio-button">
+                  Ecomeasure {!ecomeasureEnabled && '(Not Available)'}
                 </span>
               </label>
             </div>
