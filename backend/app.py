@@ -105,6 +105,22 @@ except Exception as e:
     print(f"Warning: Envira integration not available: {e}")
     ENVIRA_ENABLED = False
 
+# Import Ecomeasure data functions
+try:
+    from ecomeasure_manager import (
+        get_ecomeasure_sensors,
+        download_ecomeasure_data,
+        ECOMEASURE_ENABLED
+    )
+    
+    if ECOMEASURE_ENABLED:
+        print("Ecomeasure integration enabled")
+    else:
+        print("Warning: Ecomeasure integration not available - API token not configured")
+except Exception as e:
+    print(f"Warning: Ecomeasure integration not available: {e}")
+    ECOMEASURE_ENABLED = False
+
 def sanitize_filename(filename):
     """Sanitize filename to prevent path injection"""
     # Remove any directory path components
@@ -126,7 +142,8 @@ def health_check():
         "crafted_climate_enabled": CRAFTED_CLIMATE_ENABLED,
         "airvisual_enabled": AIRVISUAL_ENABLED,
         "airgradient_enabled": AIRGRADIENT_ENABLED,
-        "envira_enabled": ENVIRA_ENABLED
+        "envira_enabled": ENVIRA_ENABLED,
+        "ecomeasure_enabled": ECOMEASURE_ENABLED
     })
 
 @app.route('/api/sensors', methods=['GET'])
@@ -1009,6 +1026,156 @@ def preview_envira_data():
     except Exception as e:
         print(f"Error in preview_envira_data: {str(e)}")
         return jsonify({"error": "Failed to preview Envira data"}), 500
+
+# ==================== Ecomeasure Endpoints ====================
+
+@app.route('/api/ecomeasure/sensors', methods=['GET'])
+def get_ecomeasure_sensors_endpoint():
+    """Get available Ecomeasure sensors"""
+    if not ECOMEASURE_ENABLED:
+        return jsonify({"error": "Ecomeasure integration not available"}), 503
+    
+    try:
+        sensors = get_ecomeasure_sensors()
+        return jsonify({"sensors": sensors})
+    except Exception as e:
+        print(f"Error in get_ecomeasure_sensors: {str(e)}")
+        return jsonify({"error": "Failed to retrieve Ecomeasure sensors"}), 500
+
+@app.route('/api/ecomeasure/download', methods=['POST'])
+def download_ecomeasure_data_endpoint():
+    """
+    Download Ecomeasure data
+    Expects JSON body with:
+    - sensors: list of sensor IDs (optional, defaults to all)
+    - start_time: ISO format datetime string (optional)
+    - end_time: ISO format datetime string (optional)
+    - format: 'csv' or 'json' (required)
+    """
+    if not ECOMEASURE_ENABLED:
+        return jsonify({"error": "Ecomeasure integration not available"}), 503
+    
+    try:
+        data = request.get_json()
+        
+        # Parse parameters
+        sensor_ids = data.get('sensors', 'all')
+        format_type = data.get('format', 'csv')
+        
+        # Parse datetime strings if provided
+        start_time = None
+        end_time = None
+        
+        if data.get('start_time'):
+            start_time = datetime.fromisoformat(data['start_time'].replace('Z', '+00:00'))
+        
+        if data.get('end_time'):
+            end_time = datetime.fromisoformat(data['end_time'].replace('Z', '+00:00'))
+        
+        # Get data from Ecomeasure API
+        df = download_ecomeasure_data(
+            sensor_ids=sensor_ids if sensor_ids != 'all' else None,
+            start_time=start_time,
+            end_time=end_time
+        )
+        
+        if df is None or df.empty:
+            return jsonify({"error": "No data available for the specified parameters"}), 404
+        
+        # Create a temporary filename with safe directory
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_filename = sanitize_filename(f"ecomeasure_data_{timestamp}.{format_type}")
+        # Use absolute path in a safe temporary directory
+        temp_dir = os.path.abspath('/tmp')
+        temp_filepath = os.path.join(temp_dir, safe_filename)
+        
+        # Save data to file
+        if format_type == 'csv':
+            df.to_csv(temp_filepath, index=False)
+        elif format_type == 'json':
+            df.to_json(temp_filepath, orient='records', lines=True)
+        else:
+            return jsonify({"error": "Invalid format. Use 'csv' or 'json'"}), 400
+        
+        # Send file
+        if os.path.exists(temp_filepath):
+            response = send_file(
+                temp_filepath,
+                as_attachment=True,
+                download_name=safe_filename,
+                mimetype='application/octet-stream'
+            )
+            
+            # Clean up file after sending
+            @response.call_on_close
+            def cleanup():
+                try:
+                    if os.path.exists(temp_filepath):
+                        os.remove(temp_filepath)
+                except Exception as e:
+                    print(f"Error cleaning up file: {e}")
+            
+            return response
+        else:
+            return jsonify({"error": "File generation failed"}), 500
+            
+    except Exception as e:
+        print(f"Error in download_ecomeasure_data: {str(e)}")
+        return jsonify({"error": "Failed to download Ecomeasure data"}), 500
+
+@app.route('/api/ecomeasure/preview', methods=['POST'])
+def preview_ecomeasure_data():
+    """
+    Preview Ecomeasure data - returns first 10 rows as JSON
+    Expects same parameters as download endpoint
+    """
+    if not ECOMEASURE_ENABLED:
+        return jsonify({"error": "Ecomeasure integration not available"}), 503
+    
+    try:
+        data = request.get_json()
+        
+        # Parse parameters
+        sensor_ids = data.get('sensors', 'all')
+        
+        # Parse datetime strings if provided
+        start_time = None
+        end_time = None
+        
+        if data.get('start_time'):
+            start_time = datetime.fromisoformat(data['start_time'].replace('Z', '+00:00'))
+        
+        if data.get('end_time'):
+            end_time = datetime.fromisoformat(data['end_time'].replace('Z', '+00:00'))
+        
+        # Get data from Ecomeasure API
+        df = download_ecomeasure_data(
+            sensor_ids=sensor_ids if sensor_ids != 'all' else None,
+            start_time=start_time,
+            end_time=end_time
+        )
+        
+        if df is None or df.empty:
+            return jsonify({"error": "No data available for the specified parameters"}), 404
+        
+        # Return preview (first 10 rows)
+        preview = df.head(10).to_dict(orient='records')
+        
+        # Convert timestamps to strings for JSON serialization
+        for row in preview:
+            for key, value in row.items():
+                if isinstance(value, datetime):
+                    row[key] = str(value)
+        
+        return jsonify({
+            "preview": preview,
+            "total_rows": len(df),
+            "columns": list(df.columns)
+        })
+            
+    except Exception as e:
+        print(f"Error in preview_ecomeasure_data: {str(e)}")
+        return jsonify({"error": "Failed to preview Ecomeasure data"}), 500
 
 if __name__ == '__main__':
     # Use PORT environment variable for Google Cloud, default to 5000 for local development
