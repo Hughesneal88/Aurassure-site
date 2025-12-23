@@ -2,6 +2,7 @@
 Ecomeasure Data Manager - Handles data retrieval from Ecomeasure API
 """
 import os
+import pandas as pd
 from datetime import datetime, timedelta
 from ecomeasure import get_device_data, get_sensors_by_id, DEFAULT_SENSOR_IDS
 from dotenv import load_dotenv
@@ -76,8 +77,6 @@ def download_ecomeasure_data(sensor_ids=None, start_time=None, end_time=None):
         return None
     
     try:
-        import pandas as pd
-        
         # Determine which sensors to fetch
         if sensor_ids is None or sensor_ids == 'all':
             sensor_ids_to_fetch = DEFAULT_SENSOR_IDS
